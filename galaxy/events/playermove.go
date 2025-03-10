@@ -1,11 +1,11 @@
 package events
 
 import (
-	"galaxy.io/server/galaxy"
+	"galaxy.io/server/galaxy/utils"
 	"github.com/google/uuid"
 )
 
 type PlayerMove struct {
   PlayerID uuid.UUID
-  Position galaxy.Vector2D
+  Position utils.Vector2D
 }
