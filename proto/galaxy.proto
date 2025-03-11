@@ -1,0 +1,108 @@
+edition = "2023";
+
+package galaxy;
+
+message Vector2D {
+  uint32 X = 1;
+  uint32 Y = 2;
+}
+
+// Events
+
+enum EventType {
+  EvUnused = 1;
+  EvNewFood = 2;
+  EvNewPlayer = 3;
+  EvPlayerMove = 4;
+  EvPlayerGrow = 5;
+  EvDestroyFood = 6;
+  EvDestroyPlayer = 7;
+}
+
+message Event {
+  EventType eventType = 1;
+  oneof eventData {
+    NewPlayerEvent newPlayerEvent = 2;
+    NewFoodEvent newFoodEvent = 3;
+    PlayerMoveEvent playerMoveEvent = 4;
+    PlayerGrowEvent playerGrowEvent = 5;
+    DestroyFoodEvent destroyFoodEvent = 6;
+    DestroyPlayerEvent destroyPlayerEvent = 7;
+  }
+}
+
+message NewPlayerEvent {
+  uint32 playerID = 1;
+  Vector2D position = 2;
+  uint32 radius = 3;
+  uint32 color = 4;
+}
+
+message NewFoodEvent {
+  Vector2D position = 1;
+  uint32 color = 2;
+}
+
+message PlayerMoveEvent {
+  uint32 playerID = 1;
+  Vector2D position = 2;
+}
+
+message PlayerGrowEvent {
+  uint32 playerID = 1;
+  uint32 radius = 2;
+}
+
+message DestroyFoodEvent {
+  Vector2D position = 1;
+}
+
+message DestroyPlayerEvent {
+  uint32 playerID = 1;
+}
+
+
+// Operations
+
+enum OperationType {
+  OpUnused = 1;
+  OpJoin = 2;
+  OpLeave = 3;
+  OpMove = 4;
+  OpEatPlayer = 5;
+  OpEatFood = 6;
+}
+
+message Operation {
+  OperationType operationType = 1;
+  oneof operationData {
+    JoinOperation joinOperation = 2;
+    LeaveOperation leaveOperation = 3;
+    MoveOperation moveOperation = 4;
+    EatPlayerOperation eatPlayerOperation = 5;
+    EatFoodOperation eatFoodOperation = 6;
+  }
+}
+
+message JoinOperation {
+  uint32 playerID = 1;
+}
+
+message LeaveOperation {
+  uint32 playerID = 1;
+}
+
+message MoveOperation {
+  uint32 playerID = 1;
+  Vector2D position = 2;
+}
+
+message EatPlayerOperation {
+  uint32 playerID = 1;
+  uint32 playerEaten = 2;
+}
+
+message EatFoodOperation {
+  uint32 playerID = 1;
+  Vector2D foodPosition = 2;
+}
