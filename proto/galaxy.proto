@@ -1,6 +1,7 @@
 edition = "2023";
 
 package galaxy;
+option go_package = "galaxy/proto";
 
 message Vector2D {
   uint32 X = 1;
@@ -10,13 +11,13 @@ message Vector2D {
 // Events
 
 enum EventType {
-  EvUnused = 1;
-  EvNewFood = 2;
-  EvNewPlayer = 3;
-  EvPlayerMove = 4;
-  EvPlayerGrow = 5;
-  EvDestroyFood = 6;
-  EvDestroyPlayer = 7;
+  EvUnused = 0;
+  EvNewFood = 1;
+  EvNewPlayer = 2;
+  EvPlayerMove = 3;
+  EvPlayerGrow = 4;
+  EvDestroyFood = 5;
+  EvDestroyPlayer = 6;
 }
 
 message Event {
@@ -65,12 +66,12 @@ message DestroyPlayerEvent {
 // Operations
 
 enum OperationType {
-  OpUnused = 1;
-  OpJoin = 2;
-  OpLeave = 3;
-  OpMove = 4;
-  OpEatPlayer = 5;
-  OpEatFood = 6;
+  OpUnused = 0;
+  OpJoin = 1;
+  OpLeave = 2;
+  OpMove = 3;
+  OpEatPlayer = 4;
+  OpEatFood = 5;
 }
 
 message Operation {
