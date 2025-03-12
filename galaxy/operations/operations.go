@@ -2,7 +2,7 @@ package operations
 
 import "galaxy.io/server/galaxy"
 
-type operation interface {
+type Operation interface {
   Process(world *galaxy.World)
 }
 
