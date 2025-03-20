@@ -1,9 +1,6 @@
 {
   description = "A simple Go package";
 
-  # Nixpkgs / NixOS version to use.
-  inputs.nixpkgs.url = "nixpkgs/nixos-21.11";
-
   outputs = { self, nixpkgs }:
     let
 
@@ -59,7 +56,7 @@
         in
         {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [ go gopls gotools go-tools ];
+            buildInputs = with pkgs; [ go gopls gotools go-tools protobuf ];
             shellHook = ''
               zsh
               exit $?
