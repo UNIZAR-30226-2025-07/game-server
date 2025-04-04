@@ -1,7 +1,7 @@
 edition = "2023";
 
 package galaxy;
-option go_package = "galaxy/proto";
+option go_package = "./proto";
 
 message Vector2D {
   uint32 X = 1;
@@ -33,7 +33,7 @@ message Event {
 }
 
 message NewPlayerEvent {
-  uint32 playerID = 1;
+  bytes playerID = 1;
   Vector2D position = 2;
   uint32 radius = 3;
   uint32 color = 4;
@@ -45,23 +45,18 @@ message NewFoodEvent {
 }
 
 message PlayerMoveEvent {
-  uint32 playerID = 1;
+  bytes playerID = 1;
   Vector2D position = 2;
 }
 
 message PlayerGrowEvent {
-  uint32 playerID = 1;
+  bytes playerID = 1;
   uint32 radius = 2;
 }
 
-message DestroyFoodEvent {
-  Vector2D position = 1;
-}
+message DestroyFoodEvent { Vector2D position = 1; }
 
-message DestroyPlayerEvent {
-  uint32 playerID = 1;
-}
-
+message DestroyPlayerEvent { bytes playerID = 1; }
 
 // Operations
 
@@ -75,35 +70,29 @@ enum OperationType {
 }
 
 message Operation {
-  OperationType operationType = 1;
+  bytes playerID = 1;
+  OperationType operationType = 2;
   oneof operationData {
-    JoinOperation joinOperation = 2;
-    LeaveOperation leaveOperation = 3;
-    MoveOperation moveOperation = 4;
-    EatPlayerOperation eatPlayerOperation = 5;
-    EatFoodOperation eatFoodOperation = 6;
+    JoinOperation joinOperation = 3;
+    LeaveOperation leaveOperation = 4;
+    MoveOperation moveOperation = 5;
+    EatPlayerOperation eatPlayerOperation = 6;
+    EatFoodOperation eatFoodOperation = 7;
   }
 }
 
-message JoinOperation {
-  uint32 playerID = 1;
-}
+message JoinOperation {}
 
-message LeaveOperation {
-  uint32 playerID = 1;
-}
+message LeaveOperation {}
 
-message MoveOperation {
-  uint32 playerID = 1;
-  Vector2D position = 2;
-}
+message MoveOperation { Vector2D position = 1; }
 
 message EatPlayerOperation {
-  uint32 playerID = 1;
-  uint32 playerEaten = 2;
+  bytes playerEaten = 1;
+  uint32 newRadius = 2;
 }
 
 message EatFoodOperation {
-  uint32 playerID = 1;
-  Vector2D foodPosition = 2;
+  Vector2D foodPosition = 1;
+  uint32 newRadius = 2;
 }
