@@ -1,15 +1,25 @@
 package galaxy
 
 import (
+	"log"
 	"sync"
 
-	"github.com/google/uuid"
 	pb "galaxy.io/server/proto"
+	"github.com/google/uuid"
 )
 
 const (
 	STARTING_RADIUS = 50
 )
+
+type Log struct {
+	// Puntuación obtenida
+	Score uint32
+	// Jugadores eliminadosk
+	KilledPlayers uint32
+	// Segundos jugados
+	TimePlayed uint32
+}
 
 // Player represents a unique player in a game.
 type Player struct {
@@ -37,16 +47,23 @@ func NewPlayer(playerID uuid.UUID, conn ClientConnection) *Player {
 }
 
 func (p *Player) SendEvent(event *pb.Event) error {
-	return p.conn.SendEvent(event)
+	err := p.conn.SendEvent(event)
+	if err != nil {
+		log.Printf("error in sendEvent: %v", err)
+	}
+
+	return err
 }
 
 func (p *Player) Disconnect() {
+	log.Printf("disconnecting player %v", p.PlayerID)
 	if p.conn != nil {
 		p.conn.Close()
 	}
 }
 
 func (p *Player) UpdatePosition(position *Vector2D) {
+	// log.Printf("updating player position, player = %v, oldpos = %v, newpos = %v", p.PlayerID, p.Position, position)
 	p.Lock()
 	p.Position = position
 	p.Unlock()
@@ -62,6 +79,7 @@ func (p *Player) GetPosition() *Vector2D {
 }
 
 func (p *Player) UpdateRadius(radius uint32) {
+	log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius)
 	p.Lock()
 	p.Radius = radius
 	p.Unlock()
