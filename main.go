@@ -17,8 +17,10 @@ func main() {
 		world.HandleNewConnection(w, r)
 	})
 
+	log.Printf("server started in :8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: %v", err)
 	}
+
 }
