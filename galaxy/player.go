@@ -2,6 +2,7 @@ package galaxy
 
 import (
 	"log"
+	"math/rand"
 	"sync"
 
 	pb "galaxy.io/server/proto"
@@ -27,6 +28,7 @@ type Player struct {
 	PlayerID uuid.UUID
 	Position *Vector2D
 	Radius   uint32
+	Username string
 
 	// The skin the player currently is using,
 	// implemented for now as a simple RGB color.
@@ -41,8 +43,9 @@ func NewPlayer(playerID uuid.UUID, conn ClientConnection) *Player {
 		PlayerID: playerID,
 		Position: randomPosition(),
 		Radius: STARTING_RADIUS,
-		Skin: 0,
+		Skin: FoodColors[rand.Intn(len(FoodColors))],
 		conn: conn,
+		Username: "UNKNOWN",
 	}
 }
 
@@ -67,6 +70,14 @@ func (p *Player) UpdatePosition(position *Vector2D) {
 	p.Lock()
 	p.Position = position
 	p.Unlock()
+}
+
+func (p *Player) UpdateUsername(username string) {
+	p.Username = username;
+}
+
+func (p *Player) UpdateSkin(skin uint32) {
+	p.Skin = skin;
 }
 
 func (p *Player) GetPosition() *Vector2D {

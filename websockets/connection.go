@@ -171,6 +171,7 @@ func (c *Connection) writePump() {
 			}
 
 		case <-ticker.C:
+			log.Printf("ticker clock")
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(ws.PingMessage, nil); err != nil {
 				return

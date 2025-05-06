@@ -79,7 +79,6 @@ enum OperationType {
 }
 
 message Operation {
-  bytes playerID = 1;
   OperationType operationType = 2;
   oneof operationData {
     JoinOperation joinOperation = 3;
@@ -90,7 +89,10 @@ message Operation {
   }
 }
 
-message JoinOperation {}
+message JoinOperation {
+  string username = 1;
+  uint32 color = 2;
+}
 
 message LeaveOperation {}
 

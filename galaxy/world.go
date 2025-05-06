@@ -1,7 +1,6 @@
 package galaxy
 
 import (
-	"bytes"
 	"log"
 	"math/rand/v2"
 	"net/http"
@@ -86,7 +85,7 @@ func (w *World) sendEvent(player *Player, event *pb.Event) {
 		err := player.SendEvent(event)
 		if err != nil {
 			log.Printf("deleting player %v", player.PlayerID.String())
-			delete(w.players, player.PlayerID)
+			w.removePlayer(player)
 		}
 }
 
@@ -107,9 +106,6 @@ func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request)
 	player := NewPlayer(playerID, conn)
 
 	w.registerPlayer(player)
-	w.sendJoin(player)
-	go w.sendState(player)
-	go w.broadcastNewPlayer(player)
 }
 
 func (w *World) broadcastEvent(event *pb.Event) {
@@ -134,15 +130,14 @@ func (w *World) registerPlayer(player *Player) {
 func (w *World) removePlayer(player *Player) {
 	log.Printf("removing player: %v", player.PlayerID.String())
 	w.playersMutex.Lock()
+	defer w.playersMutex.Unlock()
 
 	if _, exists := w.players[player.PlayerID]; !exists {
-		w.playersMutex.Unlock()
 		return
 	}
 
 	player.Disconnect()
 	delete(w.players, player.PlayerID)
-	w.playersMutex.Unlock()
 
 	// broadcast player left event
 	event := &pb.Event{
@@ -246,21 +241,11 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 		return
 	}
 
-	// Check the player is the author of the event
-	author, err := playerID.MarshalBinary()
-	if err != nil {
-		log.Printf("invalid uuid: %v", err)
-		return
-	}
-
-	if !bytes.Equal(author, operation.PlayerID) {
-		log.Printf("the player %v tried to move a different player", player.PlayerID)
-		return
-	}
-
 	switch *operation.OperationType {
+	case pb.OperationType_OpJoin:
+		w.operationJoin(player, operation.GetJoinOperation())
 	case pb.OperationType_OpMove:
-		w.operationPlayerMove(player, operation.GetMoveOperation())
+		// w.operationPlayerMove(player, operation.GetMoveOperation())
 	case pb.OperationType_OpEatFood:
 		w.operationPlayerEatFood(player, operation.GetEatFoodOperation())
 	case pb.OperationType_OpEatPlayer:
@@ -271,6 +256,14 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 		log.Printf("unimplemented event: %v", operation.OperationType.Enum().String())
 		return
 	}
+}
+
+func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
+	player.UpdateUsername(*joinOperation.Username)
+	player.UpdateSkin(*joinOperation.Color)
+	w.sendJoin(player)
+	go w.sendState(player)
+	go w.broadcastNewPlayer(player)
 }
 
 func (w *World) operationPlayerMove(player *Player, moveOperation *pb.MoveOperation) {

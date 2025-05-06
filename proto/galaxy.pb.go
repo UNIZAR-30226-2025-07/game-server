@@ -747,7 +747,6 @@ func (x *DestroyPlayerEvent) GetPlayerID() []byte {
 
 type Operation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlayerID      []byte                 `protobuf:"bytes,1,opt,name=playerID" json:"playerID,omitempty"`
 	OperationType *OperationType         `protobuf:"varint,2,opt,name=operationType,enum=galaxy.OperationType" json:"operationType,omitempty"`
 	// Types that are valid to be assigned to OperationData:
 	//
@@ -789,13 +788,6 @@ func (x *Operation) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Operation.ProtoReflect.Descriptor instead.
 func (*Operation) Descriptor() ([]byte, []int) {
 	return file_proto_galaxy_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *Operation) GetPlayerID() []byte {
-	if x != nil {
-		return x.PlayerID
-	}
-	return nil
 }
 
 func (x *Operation) GetOperationType() OperationType {
@@ -893,6 +885,8 @@ func (*Operation_EatFoodOperation) isOperation_OperationData() {}
 
 type JoinOperation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      *string                `protobuf:"bytes,1,opt,name=username" json:"username,omitempty"`
+	Color         *uint32                `protobuf:"varint,2,opt,name=color" json:"color,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -925,6 +919,20 @@ func (x *JoinOperation) ProtoReflect() protoreflect.Message {
 // Deprecated: Use JoinOperation.ProtoReflect.Descriptor instead.
 func (*JoinOperation) Descriptor() ([]byte, []int) {
 	return file_proto_galaxy_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *JoinOperation) GetUsername() string {
+	if x != nil && x.Username != nil {
+		return *x.Username
+	}
+	return ""
+}
+
+func (x *JoinOperation) GetColor() uint32 {
+	if x != nil && x.Color != nil {
+		return *x.Color
+	}
+	return 0
 }
 
 type LeaveOperation struct {
@@ -1151,17 +1159,18 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\x10DestroyFoodEvent\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\"0\n" +
 	"\x12DestroyPlayerEvent\x12\x1a\n" +
-	"\bplayerID\x18\x01 \x01(\fR\bplayerID\"\xcb\x03\n" +
-	"\tOperation\x12\x1a\n" +
-	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12;\n" +
+	"\bplayerID\x18\x01 \x01(\fR\bplayerID\"\xaf\x03\n" +
+	"\tOperation\x12;\n" +
 	"\roperationType\x18\x02 \x01(\x0e2\x15.galaxy.OperationTypeR\roperationType\x12=\n" +
 	"\rjoinOperation\x18\x03 \x01(\v2\x15.galaxy.JoinOperationH\x00R\rjoinOperation\x12@\n" +
 	"\x0eleaveOperation\x18\x04 \x01(\v2\x16.galaxy.LeaveOperationH\x00R\x0eleaveOperation\x12=\n" +
 	"\rmoveOperation\x18\x05 \x01(\v2\x15.galaxy.MoveOperationH\x00R\rmoveOperation\x12L\n" +
 	"\x12eatPlayerOperation\x18\x06 \x01(\v2\x1a.galaxy.EatPlayerOperationH\x00R\x12eatPlayerOperation\x12F\n" +
 	"\x10eatFoodOperation\x18\a \x01(\v2\x18.galaxy.EatFoodOperationH\x00R\x10eatFoodOperationB\x0f\n" +
-	"\roperationData\"\x0f\n" +
-	"\rJoinOperation\"\x10\n" +
+	"\roperationData\"A\n" +
+	"\rJoinOperation\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
+	"\x05color\x18\x02 \x01(\rR\x05color\"\x10\n" +
 	"\x0eLeaveOperation\"=\n" +
 	"\rMoveOperation\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\"T\n" +
