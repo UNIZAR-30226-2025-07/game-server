@@ -1,12 +1,12 @@
 package galaxy
 
 import (
-	"bytes"
 	"log"
 	"math/rand/v2"
 	"net/http"
 	"sync"
 
+	"galaxy.io/server/proto"
 	pb "galaxy.io/server/proto"
 	"github.com/google/uuid"
 )
@@ -33,9 +33,24 @@ func (v *Vector2D) toPacket() *pb.Vector2D {
 }
 
 func VectorFromPacket(packet *pb.Vector2D) *Vector2D {
+	var x uint32
+	var y uint32
+
+	if packet.X == nil {
+		x = 0
+	} else {
+		x = *packet.X
+	}
+
+	if packet.Y == nil {
+		y = 0
+	} else {
+		y = *packet.Y
+	}
+
 	return &Vector2D{
-		X: *packet.X,
-		Y: *packet.Y,
+		X: x,
+		Y: y,
 	}
 }
 
@@ -61,12 +76,22 @@ type World struct {
 func NewWorld(factory ConnectionFactory) *World {
 	return &World{
 		players:           make(map[uuid.UUID]*Player),
+		food:              createRandomFood(),
 		connectionFactory: factory,
 	}
 }
 
+func (w *World) sendEvent(player *Player, event *pb.Event) {
+		err := player.SendEvent(event)
+		if err != nil {
+			log.Printf("deleting player %v", player.PlayerID.String())
+			w.removePlayer(player)
+		}
+}
+
 func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request) {
 	playerID := uuid.New()
+	log.Printf("handling new connection, player = %v", playerID)
 
 	operationHandler := func(operation *pb.Operation) {
 		w.handlePlayerOperation(playerID, operation)
@@ -81,8 +106,6 @@ func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request)
 	player := NewPlayer(playerID, conn)
 
 	w.registerPlayer(player)
-	w.sendState(player)
-	w.broadcastNewPlayer(player)
 }
 
 func (w *World) broadcastEvent(event *pb.Event) {
@@ -90,11 +113,11 @@ func (w *World) broadcastEvent(event *pb.Event) {
 	defer w.playersMutex.RUnlock()
 
 	for _, player := range w.players {
-		err := player.SendEvent(event)
-
-		if err != nil {
-			log.Printf("error sending event %v to player %v", event, player.PlayerID.String())
+		if *event.EventType != proto.EventType_EvPlayerMove {
+			log.Printf("sending event: %v to %v", event.EventType.String(), player.PlayerID.String())
 		}
+
+		w.sendEvent(player, event)
 	}
 }
 
@@ -105,16 +128,16 @@ func (w *World) registerPlayer(player *Player) {
 }
 
 func (w *World) removePlayer(player *Player) {
+	log.Printf("removing player: %v", player.PlayerID.String())
 	w.playersMutex.Lock()
+	defer w.playersMutex.Unlock()
 
 	if _, exists := w.players[player.PlayerID]; !exists {
-		w.playersMutex.Unlock()
 		return
 	}
 
 	player.Disconnect()
 	delete(w.players, player.PlayerID)
-	w.playersMutex.Unlock()
 
 	// broadcast player left event
 	event := &pb.Event{
@@ -126,7 +149,7 @@ func (w *World) removePlayer(player *Player) {
 		},
 	}
 
-	w.broadcastEvent(event)
+	go w.broadcastEvent(event)
 }
 
 func (w *World) broadcastNewPlayer(player *Player) {
@@ -142,12 +165,32 @@ func (w *World) broadcastNewPlayer(player *Player) {
 		},
 	}
 
-	w.broadcastEvent(event)
+	go w.broadcastEvent(event)
+}
+
+func (w *World) sendJoin(player *Player) {
+	w.playersMutex.RLock()
+	defer w.playersMutex.RUnlock()
+
+	event := &pb.Event{
+		EventType: pb.EventType_EvJoin.Enum(),
+		EventData: &pb.Event_JoinEvent{
+			JoinEvent: &pb.JoinEvent{
+				PlayerID: player.PlayerID[:],
+				Position: player.Position.toPacket(),
+				Radius:   &player.Radius,
+				Color:    &player.Skin,
+			},
+		},
+	}
+
+	log.Printf("sending join")
+	w.sendEvent(player, event)
 }
 
 func (w *World) sendState(receiver *Player) {
 	w.playersMutex.RLock()
-	defer w.playersMutex.Unlock()
+	defer w.playersMutex.RUnlock()
 
 	for _, player := range w.players {
 		if player.PlayerID == receiver.PlayerID {
@@ -166,7 +209,9 @@ func (w *World) sendState(receiver *Player) {
 			},
 		}
 
-		receiver.SendEvent(event)
+		log.Printf("sending state %v to player %v", player.PlayerID, receiver.PlayerID)
+
+		w.sendEvent(receiver, event)
 	}
 
 	for _, food := range w.food {
@@ -180,13 +225,14 @@ func (w *World) sendState(receiver *Player) {
 			},
 		}
 
-		receiver.SendEvent(event)
+		w.sendEvent(receiver, event)
 	}
 }
 
 /// OPERATIONS
 
 func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operation) {
+	// log.Printf("handling new operation, player = %v, op = %v", playerID, operation)
 	w.playersMutex.RLock()
 	player, exists := w.players[playerID]
 	w.playersMutex.RUnlock()
@@ -195,26 +241,16 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 		return
 	}
 
-	// Check the player is the author of the event
-	author, err := playerID.MarshalBinary()
-	if err != nil {
-		log.Printf("invalid uuid: %v", err)
-		return
-	}
-
-	if !bytes.Equal(author, operation.PlayerID) {
-		log.Printf("the player %v tried to move a different player", player.PlayerID)
-		return
-	}
-
-	switch operation.OperationType {
-	case pb.OperationType_OpMove.Enum():
-		w.operationPlayerMove(player, operation.GetMoveOperation())
-	case pb.OperationType_OpEatFood.Enum():
+	switch *operation.OperationType {
+	case pb.OperationType_OpJoin:
+		w.operationJoin(player, operation.GetJoinOperation())
+	case pb.OperationType_OpMove:
+		// w.operationPlayerMove(player, operation.GetMoveOperation())
+	case pb.OperationType_OpEatFood:
 		w.operationPlayerEatFood(player, operation.GetEatFoodOperation())
-	case pb.OperationType_OpEatPlayer.Enum():
+	case pb.OperationType_OpEatPlayer:
 		w.operationEatPlayer(player, operation.GetEatPlayerOperation())
-	case pb.OperationType_OpLeave.Enum():
+	case pb.OperationType_OpLeave:
 		w.removePlayer(player)
 	default:
 		log.Printf("unimplemented event: %v", operation.OperationType.Enum().String())
@@ -222,7 +258,19 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 	}
 }
 
+func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
+	player.UpdateUsername(*joinOperation.Username)
+	player.UpdateSkin(*joinOperation.Color)
+	w.sendJoin(player)
+	go w.sendState(player)
+	go w.broadcastNewPlayer(player)
+}
+
 func (w *World) operationPlayerMove(player *Player, moveOperation *pb.MoveOperation) {
+	if moveOperation == nil {
+		log.Printf("nil operation in playerMove, player = %v", player.PlayerID.String())
+		return
+	}
 	// TODO: check for cheaters
 	player.UpdatePosition(VectorFromPacket(moveOperation.Position))
 
@@ -238,10 +286,11 @@ func (w *World) operationPlayerMove(player *Player, moveOperation *pb.MoveOperat
 		},
 	}
 
-	w.broadcastEvent(moveEvent)
+	go w.broadcastEvent(moveEvent)
 }
 
 func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOperation) {
+	log.Printf("operationPlayerEatFood, player = %v, operation = %v", player.PlayerID.String(), operation.String())
 	player.UpdateRadius(*operation.NewRadius)
 
 	playerIDBytes, _ := player.PlayerID.MarshalBinary()
@@ -264,11 +313,12 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 		},
 	}
 
-	w.broadcastEvent(eventGrow)
-	w.broadcastEvent(eventFoodDestroy)
+	go w.broadcastEvent(eventGrow)
+	go w.broadcastEvent(eventFoodDestroy)
 }
 
 func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperation) {
+	log.Printf("operationEatPlayer, player = %v, operation = %v", player.PlayerID.String(), operation.String())
 	player.UpdateRadius(*operation.NewRadius)
 
 	playerIDBytes, _ := player.PlayerID.MarshalBinary()
@@ -291,8 +341,8 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 		},
 	}
 
-	w.broadcastEvent(eventGrow)
-	w.broadcastEvent(eventDestroyPlayer)
+	go w.broadcastEvent(eventGrow)
+	go w.broadcastEvent(eventDestroyPlayer)
 
 	playerEatenID, _ := uuid.FromBytes(operation.PlayerEaten)
 	w.playersMutex.Lock()
@@ -302,7 +352,7 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 		return
 	}
 
-	w.removePlayer(playerEaten)
-	w.broadcastEvent(eventDestroyPlayer)
-	w.broadcastEvent(eventGrow)
+	go w.removePlayer(playerEaten)
+	go w.broadcastEvent(eventDestroyPlayer)
+	go w.broadcastEvent(eventGrow)
 }

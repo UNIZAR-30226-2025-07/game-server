@@ -12,7 +12,7 @@ import (
 
 const (
 	writeWait      = 5 * time.Second
-	pongWait       = 10 * time.Second
+	pongWait       = 100 * time.Second
 	pingPeriod     = (pongWait * 9) / 10
 	maxMessageSize = 8192
 )
@@ -55,8 +55,8 @@ func Upgrade(w http.ResponseWriter, r *http.Request, handler MessageHandler) (*C
 		closed:  make(chan struct{}),
 	}
 
-	defer c.readPump()
-	defer c.writePump()
+	go c.readPump()
+	go c.writePump()
 
 	return c, nil
 }
@@ -78,16 +78,27 @@ func (c *Connection) IsClosed() bool {
 	}
 }
 
-func (c *Connection) SendBinary(data []byte) error {
+func (c *Connection) SendBinary(data []byte) (err error) {
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 			c.Close()
+	// 			err = ErrorConnectionClosed
+	// 	}
+	// }()
+
 	select {
-	case c.send <- data:
-		return nil
 	case <-c.closed:
+		log.Printf("connection closed, returning error")
 		return ErrorConnectionClosed
 	default:
-		// Buffer probably full
-		c.Close()
-		return ErrorBufferFull
+		select {
+		case c.send <- data:
+			return nil
+		default:
+			// Buffer probably full
+			c.Close()
+			return ErrorBufferFull
+		}
 	}
 }
 
@@ -107,6 +118,7 @@ func (c *Connection) readPump() {
 			if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 				log.Printf("error during websocket pump: %v", err)
 			}
+			c.Close()
 			break
 		}
 
@@ -125,6 +137,8 @@ func (c *Connection) writePump() {
 
 	for {
 		select {
+		case <-c.closed:
+			return
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
@@ -136,10 +150,20 @@ func (c *Connection) writePump() {
 			if err != nil {
 				return
 			}
-			w.Write(message)
+
+			_, err = w.Write(message)
+
+			if err != nil {
+				w.Close()
+				return
+			}
 
 			for range len(c.send) {
-				w.Write(<-c.send)
+				_, err = w.Write(<-c.send)
+				if err != nil {
+					w.Close()
+					return
+				}
 			}
 
 			if err := w.Close(); err != nil {
@@ -147,12 +171,11 @@ func (c *Connection) writePump() {
 			}
 
 		case <-ticker.C:
+			log.Printf("ticker clock")
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(ws.PingMessage, nil); err != nil {
 				return
 			}
-		case <-c.closed:
-			return
 		}
 	}
 }

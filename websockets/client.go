@@ -22,6 +22,7 @@ func (c *Client) SendEvent(event *pb.Event) error {
 }
 
 func (c *Client) Close() {
+	log.Printf("closing connection")
 	c.conn.Close()
 }
 

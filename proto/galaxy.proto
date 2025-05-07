@@ -18,6 +18,7 @@ enum EventType {
   EvPlayerGrow = 4;
   EvDestroyFood = 5;
   EvDestroyPlayer = 6;
+  EvJoin = 7;
 }
 
 message Event {
@@ -29,10 +30,18 @@ message Event {
     PlayerGrowEvent playerGrowEvent = 5;
     DestroyFoodEvent destroyFoodEvent = 6;
     DestroyPlayerEvent destroyPlayerEvent = 7;
+    JoinEvent joinEvent = 8;
   }
 }
 
 message NewPlayerEvent {
+  bytes playerID = 1;
+  Vector2D position = 2;
+  uint32 radius = 3;
+  uint32 color = 4;
+}
+
+message JoinEvent {
   bytes playerID = 1;
   Vector2D position = 2;
   uint32 radius = 3;
@@ -70,7 +79,6 @@ enum OperationType {
 }
 
 message Operation {
-  bytes playerID = 1;
   OperationType operationType = 2;
   oneof operationData {
     JoinOperation joinOperation = 3;
@@ -81,7 +89,10 @@ message Operation {
   }
 }
 
-message JoinOperation {}
+message JoinOperation {
+  string username = 1;
+  uint32 color = 2;
+}
 
 message LeaveOperation {}
 
