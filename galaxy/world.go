@@ -4,6 +4,8 @@ import (
 	"log"
 	"math/rand/v2"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -62,6 +64,31 @@ func randomPosition() *Vector2D {
 	}
 }
 
+func isPrivateServer() bool {
+	value, exists := os.LookupEnv("PRIVATE_SERVER")
+
+	if !exists {
+		log.Printf("Starting as a public server.")
+		return false // Assume false if the environment variable is not set
+	}
+
+	// Convert the value to lowercase for case-insensitive comparison
+	lowerValue := strings.ToLower(value)
+
+	// Check for common true values
+	switch lowerValue {
+	case "true", "1", "yes":
+		log.Printf("Starting as a private server.")
+		return true
+	case "false", "0", "no":
+		log.Printf("Starting as a public server.")
+		return false
+	default:
+		log.Printf("We have no clue if you want a private server, going public.")
+		return false
+	}
+}
+
 // World holds all elements inside a current game, this includes players, bots and food.
 // World is locked behind a mutex in order to archieve safe concurrency.
 // Each server should only contain one world at the moment.
@@ -74,6 +101,9 @@ type World struct {
 	playersMutex      sync.RWMutex
 	connectionFactory ConnectionFactory
 	database          *Database
+	privateServer     bool
+	gameID            *uint32
+	savedPlayers      []PlayerData
 }
 
 func NewWorld(factory ConnectionFactory) *World {
@@ -82,6 +112,7 @@ func NewWorld(factory ConnectionFactory) *World {
 		food:              createRandomFood(),
 		connectionFactory: factory,
 		database:          newDatabase(),
+		privateServer:     isPrivateServer(),
 	}
 }
 
@@ -108,7 +139,6 @@ func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request)
 	}
 
 	player := NewPlayer(connectionID, conn)
-	//
 	w.registerPlayer(player)
 }
 
@@ -242,7 +272,7 @@ func (w *World) sendState(receiver *Player) {
 /// OPERATIONS
 
 func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Operation) {
-	// log.Printf("handling new operation, player = %v, op = %v", playerID, operation)
+	log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
 	w.playersMutex.RLock()
 	player, exists := w.playersConnection[connectionID]
 	w.playersMutex.RUnlock()
@@ -281,9 +311,38 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 		player.UpdateSkin(*joinOperation.Skin)
 	}
 
-	w.Lock();
-	w.players[player.PlayerID] = player;
-	w.Unlock();
+	w.Lock()
+	w.players[player.PlayerID] = player
+	w.Unlock()
+
+	if w.privateServer {
+		if joinOperation.GameID == nil {
+			log.Printf("ERROR: a player tried joining a private server without gameID, kicking him.")
+			return
+		}
+
+		if w.gameID == nil {
+			w.gameID = joinOperation.GameID
+			w.database.StartPrivateGame(*w.gameID)
+			w.savedPlayers = w.database.GetValues(*w.gameID)
+		} else {
+			if w.gameID != joinOperation.GameID {
+				log.Printf("ERROR: a player tried joining a private server with the wrong gameID, kicking him.")
+				return
+			}
+		}
+
+		for _, savedPlayer := range w.savedPlayers {
+			if (savedPlayer.PlayerID == player.PlayerID.String()) {
+				player.UpdatePosition(&Vector2D{
+					X: savedPlayer.X,
+					Y: savedPlayer.Y,
+				})
+				player.UpdateRadius(savedPlayer.Score)
+				break
+			}
+		}
+	}
 
 	w.sendJoin(player)
 	go w.sendState(player)
