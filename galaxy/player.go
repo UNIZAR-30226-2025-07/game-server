@@ -32,7 +32,9 @@ type Player struct {
 
 	// The skin the player currently is using,
 	// implemented for now as a simple RGB color.
-	Skin uint32
+	Color uint32
+
+	Skin *string
 
 	conn ClientConnection
 }
@@ -43,7 +45,8 @@ func NewPlayer(playerID uuid.UUID, conn ClientConnection) *Player {
 		PlayerID: playerID,
 		Position: randomPosition(),
 		Radius: STARTING_RADIUS,
-		Skin: FoodColors[rand.Intn(len(FoodColors))],
+		Color: FoodColors[rand.Intn(len(FoodColors))],
+		Skin: nil,
 		conn: conn,
 		Username: "UNKNOWN",
 	}
@@ -76,8 +79,12 @@ func (p *Player) UpdateUsername(username string) {
 	p.Username = username;
 }
 
-func (p *Player) UpdateSkin(skin uint32) {
-	p.Skin = skin;
+func (p *Player) UpdateColor(color uint32) {
+	p.Color = color;
+}
+
+func (p *Player) UpdateSkin(skin string) {
+	p.Skin = &skin;
 }
 
 func (p *Player) GetPosition() *Vector2D {
