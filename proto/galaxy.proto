@@ -92,9 +92,10 @@ message Operation {
 }
 
 message JoinOperation {
-  string username = 1;
-  uint32 color = 2;
-  string skin = 3;
+  bytes playerID = 1;
+  string username = 2;
+  uint32 color = 3;
+  string skin = 4;
 }
 
 message LeaveOperation {}
