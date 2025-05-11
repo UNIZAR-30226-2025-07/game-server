@@ -82,11 +82,11 @@ func NewWorld(factory ConnectionFactory) *World {
 }
 
 func (w *World) sendEvent(player *Player, event *pb.Event) {
-		err := player.SendEvent(event)
-		if err != nil {
-			log.Printf("deleting player %v", player.PlayerID.String())
-			w.removePlayer(player)
-		}
+	err := player.SendEvent(event)
+	if err != nil {
+		log.Printf("deleting player %v", player.PlayerID.String())
+		w.removePlayer(player)
+	}
 }
 
 func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request) {
@@ -160,7 +160,8 @@ func (w *World) broadcastNewPlayer(player *Player) {
 				PlayerID: player.PlayerID[:],
 				Position: player.Position.toPacket(),
 				Radius:   &player.Radius,
-				Color:    &player.Skin,
+				Color:    &player.Color,
+				Skin:     player.Skin,
 			},
 		},
 	}
@@ -179,7 +180,8 @@ func (w *World) sendJoin(player *Player) {
 				PlayerID: player.PlayerID[:],
 				Position: player.Position.toPacket(),
 				Radius:   &player.Radius,
-				Color:    &player.Skin,
+				Color:    &player.Color,
+				Skin:     player.Skin,
 			},
 		},
 	}
@@ -204,7 +206,8 @@ func (w *World) sendState(receiver *Player) {
 					PlayerID: player.PlayerID[:],
 					Position: player.Position.toPacket(),
 					Radius:   &player.Radius,
-					Color:    &player.Skin,
+					Color:    &player.Color,
+					Skin:     player.Skin,
 				},
 			},
 		}
@@ -245,7 +248,7 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 	case pb.OperationType_OpJoin:
 		w.operationJoin(player, operation.GetJoinOperation())
 	case pb.OperationType_OpMove:
-		// w.operationPlayerMove(player, operation.GetMoveOperation())
+		w.operationPlayerMove(player, operation.GetMoveOperation())
 	case pb.OperationType_OpEatFood:
 		w.operationPlayerEatFood(player, operation.GetEatFoodOperation())
 	case pb.OperationType_OpEatPlayer:
@@ -260,7 +263,10 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 	player.UpdateUsername(*joinOperation.Username)
-	player.UpdateSkin(*joinOperation.Color)
+	player.UpdateColor(*joinOperation.Color)
+	if (joinOperation.Skin != nil) {
+		player.UpdateSkin(*joinOperation.Skin)
+	}
 	w.sendJoin(player)
 	go w.sendState(player)
 	go w.broadcastNewPlayer(player)

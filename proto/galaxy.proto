@@ -39,6 +39,7 @@ message NewPlayerEvent {
   Vector2D position = 2;
   uint32 radius = 3;
   uint32 color = 4;
+  string skin = 5; 
 }
 
 message JoinEvent {
@@ -46,6 +47,7 @@ message JoinEvent {
   Vector2D position = 2;
   uint32 radius = 3;
   uint32 color = 4;
+  string skin = 5;
 }
 
 message NewFoodEvent {
@@ -92,6 +94,7 @@ message Operation {
 message JoinOperation {
   string username = 1;
   uint32 color = 2;
+  string skin = 3;
 }
 
 message LeaveOperation {}

@@ -371,6 +371,7 @@ type NewPlayerEvent struct {
 	Position      *Vector2D              `protobuf:"bytes,2,opt,name=position" json:"position,omitempty"`
 	Radius        *uint32                `protobuf:"varint,3,opt,name=radius" json:"radius,omitempty"`
 	Color         *uint32                `protobuf:"varint,4,opt,name=color" json:"color,omitempty"`
+	Skin          *string                `protobuf:"bytes,5,opt,name=skin" json:"skin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -433,12 +434,20 @@ func (x *NewPlayerEvent) GetColor() uint32 {
 	return 0
 }
 
+func (x *NewPlayerEvent) GetSkin() string {
+	if x != nil && x.Skin != nil {
+		return *x.Skin
+	}
+	return ""
+}
+
 type JoinEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerID      []byte                 `protobuf:"bytes,1,opt,name=playerID" json:"playerID,omitempty"`
 	Position      *Vector2D              `protobuf:"bytes,2,opt,name=position" json:"position,omitempty"`
 	Radius        *uint32                `protobuf:"varint,3,opt,name=radius" json:"radius,omitempty"`
 	Color         *uint32                `protobuf:"varint,4,opt,name=color" json:"color,omitempty"`
+	Skin          *string                `protobuf:"bytes,5,opt,name=skin" json:"skin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -499,6 +508,13 @@ func (x *JoinEvent) GetColor() uint32 {
 		return *x.Color
 	}
 	return 0
+}
+
+func (x *JoinEvent) GetSkin() string {
+	if x != nil && x.Skin != nil {
+		return *x.Skin
+	}
+	return ""
 }
 
 type NewFoodEvent struct {
@@ -887,6 +903,7 @@ type JoinOperation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Username      *string                `protobuf:"bytes,1,opt,name=username" json:"username,omitempty"`
 	Color         *uint32                `protobuf:"varint,2,opt,name=color" json:"color,omitempty"`
+	Skin          *string                `protobuf:"bytes,3,opt,name=skin" json:"skin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -933,6 +950,13 @@ func (x *JoinOperation) GetColor() uint32 {
 		return *x.Color
 	}
 	return 0
+}
+
+func (x *JoinOperation) GetSkin() string {
+	if x != nil && x.Skin != nil {
+		return *x.Skin
+	}
+	return ""
 }
 
 type LeaveOperation struct {
@@ -1136,17 +1160,19 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\x10destroyFoodEvent\x18\x06 \x01(\v2\x18.galaxy.DestroyFoodEventH\x00R\x10destroyFoodEvent\x12L\n" +
 	"\x12destroyPlayerEvent\x18\a \x01(\v2\x1a.galaxy.DestroyPlayerEventH\x00R\x12destroyPlayerEvent\x121\n" +
 	"\tjoinEvent\x18\b \x01(\v2\x11.galaxy.JoinEventH\x00R\tjoinEventB\v\n" +
-	"\teventData\"\x88\x01\n" +
+	"\teventData\"\x9c\x01\n" +
 	"\x0eNewPlayerEvent\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12,\n" +
 	"\bposition\x18\x02 \x01(\v2\x10.galaxy.Vector2DR\bposition\x12\x16\n" +
 	"\x06radius\x18\x03 \x01(\rR\x06radius\x12\x14\n" +
-	"\x05color\x18\x04 \x01(\rR\x05color\"\x83\x01\n" +
+	"\x05color\x18\x04 \x01(\rR\x05color\x12\x12\n" +
+	"\x04skin\x18\x05 \x01(\tR\x04skin\"\x97\x01\n" +
 	"\tJoinEvent\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12,\n" +
 	"\bposition\x18\x02 \x01(\v2\x10.galaxy.Vector2DR\bposition\x12\x16\n" +
 	"\x06radius\x18\x03 \x01(\rR\x06radius\x12\x14\n" +
-	"\x05color\x18\x04 \x01(\rR\x05color\"R\n" +
+	"\x05color\x18\x04 \x01(\rR\x05color\x12\x12\n" +
+	"\x04skin\x18\x05 \x01(\tR\x04skin\"R\n" +
 	"\fNewFoodEvent\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\x12\x14\n" +
 	"\x05color\x18\x02 \x01(\rR\x05color\"[\n" +
@@ -1167,10 +1193,11 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\rmoveOperation\x18\x05 \x01(\v2\x15.galaxy.MoveOperationH\x00R\rmoveOperation\x12L\n" +
 	"\x12eatPlayerOperation\x18\x06 \x01(\v2\x1a.galaxy.EatPlayerOperationH\x00R\x12eatPlayerOperation\x12F\n" +
 	"\x10eatFoodOperation\x18\a \x01(\v2\x18.galaxy.EatFoodOperationH\x00R\x10eatFoodOperationB\x0f\n" +
-	"\roperationData\"A\n" +
+	"\roperationData\"U\n" +
 	"\rJoinOperation\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
-	"\x05color\x18\x02 \x01(\rR\x05color\"\x10\n" +
+	"\x05color\x18\x02 \x01(\rR\x05color\x12\x12\n" +
+	"\x04skin\x18\x03 \x01(\tR\x04skin\"\x10\n" +
 	"\x0eLeaveOperation\"=\n" +
 	"\rMoveOperation\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\"T\n" +
