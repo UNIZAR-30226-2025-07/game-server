@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"net/http"
 
 	"galaxy.io/server/galaxy"
@@ -17,8 +18,11 @@ func main() {
 		world.HandleNewConnection(w, r)
 	})
 
-	log.Printf("server started in :8080")
-	err := http.ListenAndServe(":8080", nil)
+	ip := os.Getenv("GALAXY_SERVER_IP")
+	port := os.Getenv("GALAXY_SERVER_PORT")
+
+	log.Printf("server started in %v:%v", ip, port)
+	err := http.ListenAndServe(ip+":"+port, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: %v", err)
 	}
