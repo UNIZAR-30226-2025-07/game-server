@@ -901,9 +901,10 @@ func (*Operation_EatFoodOperation) isOperation_OperationData() {}
 
 type JoinOperation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Username      *string                `protobuf:"bytes,1,opt,name=username" json:"username,omitempty"`
-	Color         *uint32                `protobuf:"varint,2,opt,name=color" json:"color,omitempty"`
-	Skin          *string                `protobuf:"bytes,3,opt,name=skin" json:"skin,omitempty"`
+	PlayerID      []byte                 `protobuf:"bytes,1,opt,name=playerID" json:"playerID,omitempty"`
+	Username      *string                `protobuf:"bytes,2,opt,name=username" json:"username,omitempty"`
+	Color         *uint32                `protobuf:"varint,3,opt,name=color" json:"color,omitempty"`
+	Skin          *string                `protobuf:"bytes,4,opt,name=skin" json:"skin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -936,6 +937,13 @@ func (x *JoinOperation) ProtoReflect() protoreflect.Message {
 // Deprecated: Use JoinOperation.ProtoReflect.Descriptor instead.
 func (*JoinOperation) Descriptor() ([]byte, []int) {
 	return file_proto_galaxy_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *JoinOperation) GetPlayerID() []byte {
+	if x != nil {
+		return x.PlayerID
+	}
+	return nil
 }
 
 func (x *JoinOperation) GetUsername() string {
@@ -1193,11 +1201,12 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\rmoveOperation\x18\x05 \x01(\v2\x15.galaxy.MoveOperationH\x00R\rmoveOperation\x12L\n" +
 	"\x12eatPlayerOperation\x18\x06 \x01(\v2\x1a.galaxy.EatPlayerOperationH\x00R\x12eatPlayerOperation\x12F\n" +
 	"\x10eatFoodOperation\x18\a \x01(\v2\x18.galaxy.EatFoodOperationH\x00R\x10eatFoodOperationB\x0f\n" +
-	"\roperationData\"U\n" +
+	"\roperationData\"q\n" +
 	"\rJoinOperation\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
-	"\x05color\x18\x02 \x01(\rR\x05color\x12\x12\n" +
-	"\x04skin\x18\x03 \x01(\tR\x04skin\"\x10\n" +
+	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
+	"\x05color\x18\x03 \x01(\rR\x05color\x12\x12\n" +
+	"\x04skin\x18\x04 \x01(\tR\x04skin\"\x10\n" +
 	"\x0eLeaveOperation\"=\n" +
 	"\rMoveOperation\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\"T\n" +
