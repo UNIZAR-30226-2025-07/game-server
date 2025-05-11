@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"sync"
+	"time"
 
 	"galaxy.io/server/proto"
 	pb "galaxy.io/server/proto"
@@ -69,15 +70,19 @@ type World struct {
 	food              []Food
 	foodMutex         sync.RWMutex
 	players           map[uuid.UUID]*Player
+	playersConnection map[uuid.UUID]*Player
 	playersMutex      sync.RWMutex
 	connectionFactory ConnectionFactory
+	database          *Database
 }
 
 func NewWorld(factory ConnectionFactory) *World {
 	return &World{
 		players:           make(map[uuid.UUID]*Player),
+		playersConnection: make(map[uuid.UUID]*Player),
 		food:              createRandomFood(),
 		connectionFactory: factory,
+		database:          newDatabase(),
 	}
 }
 
@@ -90,11 +95,11 @@ func (w *World) sendEvent(player *Player, event *pb.Event) {
 }
 
 func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request) {
-	playerID := uuid.New()
-	log.Printf("handling new connection, player = %v", playerID)
+	connectionID := uuid.New()
+	log.Printf("handling new connection, id = %v", connectionID)
 
 	operationHandler := func(operation *pb.Operation) {
-		w.handlePlayerOperation(playerID, operation)
+		w.handlePlayerOperation(connectionID, operation)
 	}
 
 	conn, err := w.connectionFactory.NewConnection(writer, r, operationHandler)
@@ -103,8 +108,8 @@ func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	player := NewPlayer(playerID, conn)
-
+	player := NewPlayer(connectionID, conn)
+	//
 	w.registerPlayer(player)
 }
 
@@ -123,7 +128,8 @@ func (w *World) broadcastEvent(event *pb.Event) {
 
 func (w *World) registerPlayer(player *Player) {
 	w.playersMutex.Lock()
-	w.players[player.PlayerID] = player
+	log.Printf("registering player with connection: %v", player.ConnectionID.String())
+	w.playersConnection[player.ConnectionID] = player
 	w.playersMutex.Unlock()
 }
 
@@ -150,6 +156,12 @@ func (w *World) removePlayer(player *Player) {
 	}
 
 	go w.broadcastEvent(event)
+
+	// TODO: send stats to database
+	player.Stats.Lock();
+	player.Stats.TimeEnd = time.Now();
+	player.Stats.Unlock();
+	w.database.PostAchievements(player)
 }
 
 func (w *World) broadcastNewPlayer(player *Player) {
@@ -234,13 +246,14 @@ func (w *World) sendState(receiver *Player) {
 
 /// OPERATIONS
 
-func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operation) {
-	// log.Printf("handling new operation, player = %v, op = %v", playerID, operation)
+func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Operation) {
+	// log.Printf("handling new operation, connection = %v, op = %v", connectionID, operation)
 	w.playersMutex.RLock()
-	player, exists := w.players[playerID]
+	player, exists := w.playersConnection[connectionID]
 	w.playersMutex.RUnlock()
 
 	if !exists {
+		log.Printf("...does not exists")
 		return
 	}
 
@@ -262,14 +275,30 @@ func (w *World) handlePlayerOperation(playerID uuid.UUID, operation *pb.Operatio
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
+	playerID, err := uuid.FromBytes(joinOperation.PlayerID)
+	if err != nil {
+		log.Printf("warn: unable to parse playerID: %v", err)
+		return
+	}
+	log.Printf("joining with id: %v", playerID.String())
+	player.UpdatePlayerID(playerID)
 	player.UpdateUsername(*joinOperation.Username)
 	player.UpdateColor(*joinOperation.Color)
-	if (joinOperation.Skin != nil) {
+	if joinOperation.Skin != nil {
 		player.UpdateSkin(*joinOperation.Skin)
 	}
+
+	w.Lock()
+	w.players[player.PlayerID] = player
+	w.Unlock()
+
 	w.sendJoin(player)
 	go w.sendState(player)
 	go w.broadcastNewPlayer(player)
+
+	player.Stats.Lock()
+	player.Stats.TimeStart = time.Now()
+	player.Stats.Unlock()
 }
 
 func (w *World) operationPlayerMove(player *Player, moveOperation *pb.MoveOperation) {
@@ -361,4 +390,8 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 	go w.removePlayer(playerEaten)
 	go w.broadcastEvent(eventDestroyPlayer)
 	go w.broadcastEvent(eventGrow)
+
+	player.Stats.Lock()
+	player.Stats.KilledPlayers++
+	player.Stats.Unlock()
 }
