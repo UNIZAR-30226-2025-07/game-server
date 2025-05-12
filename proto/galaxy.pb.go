@@ -905,6 +905,7 @@ type JoinOperation struct {
 	Username      *string                `protobuf:"bytes,2,opt,name=username" json:"username,omitempty"`
 	Color         *uint32                `protobuf:"varint,3,opt,name=color" json:"color,omitempty"`
 	Skin          *string                `protobuf:"bytes,4,opt,name=skin" json:"skin,omitempty"`
+	GameID        *uint32                `protobuf:"varint,5,opt,name=gameID" json:"gameID,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -965,6 +966,13 @@ func (x *JoinOperation) GetSkin() string {
 		return *x.Skin
 	}
 	return ""
+}
+
+func (x *JoinOperation) GetGameID() uint32 {
+	if x != nil && x.GameID != nil {
+		return *x.GameID
+	}
+	return 0
 }
 
 type LeaveOperation struct {
@@ -1201,12 +1209,13 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\rmoveOperation\x18\x05 \x01(\v2\x15.galaxy.MoveOperationH\x00R\rmoveOperation\x12L\n" +
 	"\x12eatPlayerOperation\x18\x06 \x01(\v2\x1a.galaxy.EatPlayerOperationH\x00R\x12eatPlayerOperation\x12F\n" +
 	"\x10eatFoodOperation\x18\a \x01(\v2\x18.galaxy.EatFoodOperationH\x00R\x10eatFoodOperationB\x0f\n" +
-	"\roperationData\"q\n" +
+	"\roperationData\"\x89\x01\n" +
 	"\rJoinOperation\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
 	"\x05color\x18\x03 \x01(\rR\x05color\x12\x12\n" +
-	"\x04skin\x18\x04 \x01(\tR\x04skin\"\x10\n" +
+	"\x04skin\x18\x04 \x01(\tR\x04skin\x12\x16\n" +
+	"\x06gameID\x18\x05 \x01(\rR\x06gameID\"\x10\n" +
 	"\x0eLeaveOperation\"=\n" +
 	"\rMoveOperation\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\"T\n" +

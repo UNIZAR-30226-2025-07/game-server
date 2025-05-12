@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	writeWait      = 5 * time.Second
-	pongWait       = 100 * time.Second
+	writeWait      = 0
+	pongWait       = 60 * time.Second
 	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 8192
+	maxMessageSize = 512
 )
 
 // MessageHandler defines a function that processes binary messaeges
@@ -50,7 +50,7 @@ func Upgrade(w http.ResponseWriter, r *http.Request, handler MessageHandler) (*C
 
 	c := &Connection{
 		conn:    conn,
-		send:    make(chan []byte, 256),
+		send:    make(chan []byte, 2048),
 		handler: handler,
 		closed:  make(chan struct{}),
 	}
@@ -79,13 +79,6 @@ func (c *Connection) IsClosed() bool {
 }
 
 func (c *Connection) SendBinary(data []byte) (err error) {
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 			c.Close()
-	// 			err = ErrorConnectionClosed
-	// 	}
-	// }()
-
 	select {
 	case <-c.closed:
 		log.Printf("connection closed, returning error")
@@ -96,7 +89,7 @@ func (c *Connection) SendBinary(data []byte) (err error) {
 			return nil
 		default:
 			// Buffer probably full
-			c.Close()
+			// c.Close()
 			return ErrorBufferFull
 		}
 	}
@@ -104,11 +97,11 @@ func (c *Connection) SendBinary(data []byte) (err error) {
 
 func (c *Connection) readPump() {
 	defer c.Close()
-
+	var tzero time.Time
 	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetReadDeadline(tzero)
 	c.conn.SetPongHandler(func(string) error {
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		c.conn.SetReadDeadline(tzero)
 		return nil
 	})
 
@@ -119,7 +112,7 @@ func (c *Connection) readPump() {
 				log.Printf("error during websocket pump: %v", err)
 			}
 			c.Close()
-			break
+			return
 		}
 
 		if c.handler != nil {
@@ -129,18 +122,17 @@ func (c *Connection) readPump() {
 }
 
 func (c *Connection) writePump() {
-	ticker := time.NewTicker(pingPeriod)
+	var tzero time.Time
+	// ticker := time.NewTicker(pingPeriod)
 	defer func() {
-		ticker.Stop()
+		// ticker.Stop()
 		c.conn.Close()
 	}()
 
 	for {
 		select {
-		case <-c.closed:
-			return
 		case message, ok := <-c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			c.conn.SetWriteDeadline(tzero)
 			if !ok {
 				c.conn.WriteMessage(ws.CloseMessage, []byte{})
 				return
@@ -151,31 +143,26 @@ func (c *Connection) writePump() {
 				return
 			}
 
-			_, err = w.Write(message)
-
-			if err != nil {
-				w.Close()
-				return
-			}
+			w.Write(message)
 
 			for range len(c.send) {
-				_, err = w.Write(<-c.send)
-				if err != nil {
-					w.Close()
-					return
-				}
+				w.Write(<-c.send)
 			}
 
 			if err := w.Close(); err != nil {
+				log.Printf("error while closing writepump %v", err)
 				return
 			}
 
-		case <-ticker.C:
-			log.Printf("ticker clock")
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.conn.WriteMessage(ws.PingMessage, nil); err != nil {
-				return
-			}
+		case <-c.closed:
+			return
+
+		// case <-ticker.C:
+		// 	log.Printf("ticker clock")
+		// 	c.conn.SetWriteDeadline(tzero)
+		// 	if err := c.conn.WriteMessage(ws.PingMessage, nil); err != nil {
+		// 		return
+		// 	}
 		}
 	}
 }

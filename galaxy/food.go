@@ -46,7 +46,7 @@ type Food struct {
 func createRandomFood() []Food {
 	// 100 comidas
 	var food []Food
-	for i := 0; i < 4000; i++ {
+	for i := 0; i < 25; i++ {
 		food = append(food, Food{
 			position: *randomPosition(),
 			color: randomColor(),

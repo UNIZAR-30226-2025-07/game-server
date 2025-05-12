@@ -96,6 +96,7 @@ message JoinOperation {
   string username = 2;
   uint32 color = 3;
   string skin = 4;
+  uint32 gameID = 5;
 }
 
 message LeaveOperation {}
