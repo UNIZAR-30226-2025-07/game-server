@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"sync"
+	"time"
 
 	pb "galaxy.io/server/proto"
 	"github.com/google/uuid"
@@ -14,21 +15,25 @@ const (
 )
 
 type Log struct {
+	sync.Mutex
 	// Puntuación obtenida
 	Score uint32
-	// Jugadores eliminadosk
+	// Jugadores eliminados
 	KilledPlayers uint32
 	// Segundos jugados
-	TimePlayed uint32
+	TimeStart time.Time
+	TimeEnd time.Time
 }
 
 // Player represents a unique player in a game.
 type Player struct {
 	sync.RWMutex
 	PlayerID uuid.UUID
+	ConnectionID uuid.UUID
 	Position *Vector2D
 	Radius   uint32
 	Username string
+	Stats Log
 
 	// The skin the player currently is using,
 	// implemented for now as a simple RGB color.
@@ -40,15 +45,17 @@ type Player struct {
 }
 
 
-func NewPlayer(playerID uuid.UUID, conn ClientConnection) *Player {
+func NewPlayer(connectionID uuid.UUID, conn ClientConnection) *Player {
 	return &Player{
-		PlayerID: playerID,
+		// PlayerID: playerID,
+		ConnectionID: connectionID,
 		Position: randomPosition(),
 		Radius: STARTING_RADIUS,
 		Color: FoodColors[rand.Intn(len(FoodColors))],
 		Skin: nil,
 		conn: conn,
 		Username: "UNKNOWN",
+		Stats: Log{},
 	}
 }
 
@@ -75,6 +82,10 @@ func (p *Player) UpdatePosition(position *Vector2D) {
 	p.Unlock()
 }
 
+func (p *Player) UpdatePlayerID(playerID uuid.UUID) {
+	p.PlayerID = playerID;
+}
+
 func (p *Player) UpdateUsername(username string) {
 	p.Username = username;
 }
@@ -97,8 +108,13 @@ func (p *Player) GetPosition() *Vector2D {
 }
 
 func (p *Player) UpdateRadius(radius uint32) {
-	log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius)
-	p.Lock()
-	p.Radius = radius
-	p.Unlock()
+	log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius);
+	p.Lock();
+	p.Radius = radius;
+
+	p.Stats.Lock();
+	p.Stats.Score = radius;
+	p.Stats.Unlock();
+
+	p.Unlock();
 }
