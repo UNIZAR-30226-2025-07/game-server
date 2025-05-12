@@ -152,7 +152,7 @@ func (w *World) broadcastEvent(event *pb.Event) {
 			log.Printf("sending event: %v to %v", event.EventType.String(), player.ConnectionID.String())
 		}
 
-		go w.sendEvent(player, event)
+		w.sendEvent(player, event)
 	}
 }
 
@@ -165,14 +165,15 @@ func (w *World) registerPlayer(player *Player) {
 func (w *World) removePlayer(player *Player) {
 	log.Printf("removing player: %v", player.PlayerID.String())
 	w.playersMutex.Lock()
-	defer w.playersMutex.Unlock()
 
 	if _, exists := w.players[player.PlayerID]; !exists {
+		w.playersMutex.Unlock()
 		return
 	}
 
 	player.Disconnect()
 	delete(w.players, player.PlayerID)
+	w.playersMutex.Unlock()
 
 	// broadcast player left event
 	event := &pb.Event{
@@ -250,7 +251,7 @@ func (w *World) sendState(receiver *Player) {
 
 		log.Printf("sending state %v to player %v", player.PlayerID, receiver.PlayerID)
 
-		go w.sendEvent(receiver, event)
+		w.sendEvent(receiver, event)
 	}
 
 	for _, food := range w.food {
@@ -284,7 +285,7 @@ func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Oper
 	case pb.OperationType_OpJoin:
 		w.operationJoin(player, operation.GetJoinOperation())
 	case pb.OperationType_OpMove:
-		// w.operationPlayerMove(player, operation.GetMoveOperation())
+		w.operationPlayerMove(player, operation.GetMoveOperation())
 	case pb.OperationType_OpEatFood:
 		w.operationPlayerEatFood(player, operation.GetEatFoodOperation())
 	case pb.OperationType_OpEatPlayer:
@@ -379,13 +380,22 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 	log.Printf("operationPlayerEatFood, player = %v, operation = %v", player.PlayerID.String(), operation.String())
 	player.UpdateRadius(*operation.NewRadius)
 
+	foodPos := VectorFromPacket(operation.FoodPosition)
+	w.foodMutex.Lock()
+	for i, f := range w.food {
+		if f.position == *foodPos {
+			w.food = append(w.food[:i], w.food[i+1:]...)
+		}
+	}
+	w.foodMutex.Unlock()
+
 	playerIDBytes, _ := player.PlayerID.MarshalBinary()
 	eventGrow := &pb.Event{
 		EventType: pb.EventType_EvPlayerGrow.Enum(),
 		EventData: &pb.Event_PlayerGrowEvent{
 			PlayerGrowEvent: &pb.PlayerGrowEvent{
 				PlayerID: playerIDBytes,
-				Radius:   operation.NewRadius,
+				Radius:   &player.Radius,
 			},
 		},
 	}
