@@ -109,6 +109,7 @@ type World struct {
 func NewWorld(factory ConnectionFactory) *World {
 	return &World{
 		players:           make(map[uuid.UUID]*Player),
+		playersConnection: make(map[uuid.UUID]*Player),
 		food:              createRandomFood(),
 		connectionFactory: factory,
 		database:          newDatabase(),
@@ -148,16 +149,16 @@ func (w *World) broadcastEvent(event *pb.Event) {
 
 	for _, player := range w.players {
 		if *event.EventType != proto.EventType_EvPlayerMove {
-			log.Printf("sending event: %v to %v", event.EventType.String(), player.PlayerID.String())
+			log.Printf("sending event: %v to %v", event.EventType.String(), player.ConnectionID.String())
 		}
 
-		w.sendEvent(player, event)
+		go w.sendEvent(player, event)
 	}
 }
 
 func (w *World) registerPlayer(player *Player) {
 	w.playersMutex.Lock()
-	w.players[player.ConnectionID] = player
+	w.playersConnection[player.ConnectionID] = player
 	w.playersMutex.Unlock()
 }
 
@@ -183,9 +184,7 @@ func (w *World) removePlayer(player *Player) {
 		},
 	}
 
-	go w.broadcastEvent(event)
-
-	// TODO: send stats to database
+	w.broadcastEvent(event)
 	w.database.PostAchievements(player)
 }
 
@@ -203,7 +202,7 @@ func (w *World) broadcastNewPlayer(player *Player) {
 		},
 	}
 
-	go w.broadcastEvent(event)
+	w.broadcastEvent(event)
 }
 
 func (w *World) sendJoin(player *Player) {
@@ -224,7 +223,7 @@ func (w *World) sendJoin(player *Player) {
 	}
 
 	log.Printf("sending join")
-	w.sendEvent(player, event)
+	go w.sendEvent(player, event)
 }
 
 func (w *World) sendState(receiver *Player) {
@@ -251,7 +250,7 @@ func (w *World) sendState(receiver *Player) {
 
 		log.Printf("sending state %v to player %v", player.PlayerID, receiver.PlayerID)
 
-		w.sendEvent(receiver, event)
+		go w.sendEvent(receiver, event)
 	}
 
 	for _, food := range w.food {
@@ -265,14 +264,14 @@ func (w *World) sendState(receiver *Player) {
 			},
 		}
 
-		w.sendEvent(receiver, event)
+		go w.sendEvent(receiver, event)
 	}
 }
 
 /// OPERATIONS
 
 func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Operation) {
-	log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
+	// log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
 	w.playersMutex.RLock()
 	player, exists := w.playersConnection[connectionID]
 	w.playersMutex.RUnlock()
@@ -285,7 +284,7 @@ func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Oper
 	case pb.OperationType_OpJoin:
 		w.operationJoin(player, operation.GetJoinOperation())
 	case pb.OperationType_OpMove:
-		w.operationPlayerMove(player, operation.GetMoveOperation())
+		// w.operationPlayerMove(player, operation.GetMoveOperation())
 	case pb.OperationType_OpEatFood:
 		w.operationPlayerEatFood(player, operation.GetEatFoodOperation())
 	case pb.OperationType_OpEatPlayer:
@@ -333,7 +332,7 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 		}
 
 		for _, savedPlayer := range w.savedPlayers {
-			if (savedPlayer.PlayerID == player.PlayerID.String()) {
+			if savedPlayer.PlayerID == player.PlayerID.String() {
 				player.UpdatePosition(&Vector2D{
 					X: savedPlayer.X,
 					Y: savedPlayer.Y,
@@ -345,8 +344,8 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 	}
 
 	w.sendJoin(player)
-	go w.sendState(player)
-	go w.broadcastNewPlayer(player)
+	w.sendState(player)
+	w.broadcastNewPlayer(player)
 
 	player.Stats.Lock()
 	player.Stats.TimeStart = time.Now()
@@ -373,7 +372,7 @@ func (w *World) operationPlayerMove(player *Player, moveOperation *pb.MoveOperat
 		},
 	}
 
-	go w.broadcastEvent(moveEvent)
+	w.broadcastEvent(moveEvent)
 }
 
 func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOperation) {
@@ -400,8 +399,8 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 		},
 	}
 
-	go w.broadcastEvent(eventGrow)
-	go w.broadcastEvent(eventFoodDestroy)
+	w.broadcastEvent(eventGrow)
+	w.broadcastEvent(eventFoodDestroy)
 }
 
 func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperation) {
@@ -428,8 +427,8 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 		},
 	}
 
-	go w.broadcastEvent(eventGrow)
-	go w.broadcastEvent(eventDestroyPlayer)
+	w.broadcastEvent(eventGrow)
+	w.broadcastEvent(eventDestroyPlayer)
 
 	playerEatenID, _ := uuid.FromBytes(operation.PlayerEaten)
 	w.playersMutex.Lock()
@@ -439,9 +438,9 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 		return
 	}
 
-	go w.removePlayer(playerEaten)
-	go w.broadcastEvent(eventDestroyPlayer)
-	go w.broadcastEvent(eventGrow)
+	w.removePlayer(playerEaten)
+	w.broadcastEvent(eventDestroyPlayer)
+	w.broadcastEvent(eventGrow)
 
 	player.Stats.Lock()
 	player.Stats.KilledPlayers++
