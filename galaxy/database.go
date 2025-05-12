@@ -125,6 +125,10 @@ func (d *Database) GetValues(gameID uint32) []PlayerData {
 	return gameData
 }
 
+func (d *Database) UpdateValues() {
+	log.Printf("updating values (NOT IMPLEMENTED YET)")
+}
+
 func (d *Database) PostAchievements(player *Player) {
 	player.Stats.Lock()
 	defer player.Stats.Unlock()
