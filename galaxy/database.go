@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	URL = "http://galaxy.t2dc.es:3000/"
+	URL = "http://galaxy.t2dc.es:3000"
 )
 
 type Database struct {

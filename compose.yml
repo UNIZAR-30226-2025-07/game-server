@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  public:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: server:latest # Tag the built image
+    ports:
+      - "4440:4440" # Map a host port to the container port (uncomment if needed)
+    environment:
+      - PRIVATE_SERVER=no
+      - GALAXY_SERVER_IP=0.0.0.0
+      - GALAXY_SERVER_PORT=4440
+    container_name: public # Optional: give the container a name
+    restart: unless-stopped # Optional: restart policy
+
+  private:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: server:latest # Tag the built image
+    ports:
+      - "4441:4441" # Map a host port to the container port (uncomment if needed)
+    environment:
+      - PRIVATE_SERVER=yes
+      - GALAXY_SERVER_IP=0.0.0.0
+      - GALAXY_SERVER_PORT=4441
+    container_name: private # Optional: give the container a name
+    restart: unless-stopped # Optional: restart policy
