@@ -372,6 +372,7 @@ type NewPlayerEvent struct {
 	Radius        *uint32                `protobuf:"varint,3,opt,name=radius" json:"radius,omitempty"`
 	Color         *uint32                `protobuf:"varint,4,opt,name=color" json:"color,omitempty"`
 	Skin          *string                `protobuf:"bytes,5,opt,name=skin" json:"skin,omitempty"`
+	Username      *string                `protobuf:"bytes,6,opt,name=username" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -437,6 +438,13 @@ func (x *NewPlayerEvent) GetColor() uint32 {
 func (x *NewPlayerEvent) GetSkin() string {
 	if x != nil && x.Skin != nil {
 		return *x.Skin
+	}
+	return ""
+}
+
+func (x *NewPlayerEvent) GetUsername() string {
+	if x != nil && x.Username != nil {
+		return *x.Username
 	}
 	return ""
 }
@@ -1176,13 +1184,14 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\x10destroyFoodEvent\x18\x06 \x01(\v2\x18.galaxy.DestroyFoodEventH\x00R\x10destroyFoodEvent\x12L\n" +
 	"\x12destroyPlayerEvent\x18\a \x01(\v2\x1a.galaxy.DestroyPlayerEventH\x00R\x12destroyPlayerEvent\x121\n" +
 	"\tjoinEvent\x18\b \x01(\v2\x11.galaxy.JoinEventH\x00R\tjoinEventB\v\n" +
-	"\teventData\"\x9c\x01\n" +
+	"\teventData\"\xb8\x01\n" +
 	"\x0eNewPlayerEvent\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12,\n" +
 	"\bposition\x18\x02 \x01(\v2\x10.galaxy.Vector2DR\bposition\x12\x16\n" +
 	"\x06radius\x18\x03 \x01(\rR\x06radius\x12\x14\n" +
 	"\x05color\x18\x04 \x01(\rR\x05color\x12\x12\n" +
-	"\x04skin\x18\x05 \x01(\tR\x04skin\"\x97\x01\n" +
+	"\x04skin\x18\x05 \x01(\tR\x04skin\x12\x1a\n" +
+	"\busername\x18\x06 \x01(\tR\busername\"\x97\x01\n" +
 	"\tJoinEvent\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12,\n" +
 	"\bposition\x18\x02 \x01(\v2\x10.galaxy.Vector2DR\bposition\x12\x16\n" +
