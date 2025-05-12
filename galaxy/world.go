@@ -302,6 +302,11 @@ func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Oper
 }
 
 func (w *World) pauseServer() {
+	if w.gameID == nil {
+		// pause is not implemented in public matches
+		return
+	}
+
 	pauseEvent := &pb.Event{
 		EventType: pb.EventType_EvPause.Enum(),
 		EventData: &pb.Event_PauseEvent{},
