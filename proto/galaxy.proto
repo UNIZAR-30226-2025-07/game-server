@@ -19,6 +19,7 @@ enum EventType {
   EvDestroyFood = 5;
   EvDestroyPlayer = 6;
   EvJoin = 7;
+  EvPause = 8;
 }
 
 message Event {
@@ -31,6 +32,7 @@ message Event {
     DestroyFoodEvent destroyFoodEvent = 6;
     DestroyPlayerEvent destroyPlayerEvent = 7;
     JoinEvent joinEvent = 8;
+    PauseEvent pauseEvent = 9;
   }
 }
 
@@ -70,6 +72,8 @@ message DestroyFoodEvent { Vector2D position = 1; }
 
 message DestroyPlayerEvent { bytes playerID = 1; }
 
+message PauseEvent {}
+
 // Operations
 
 enum OperationType {
@@ -79,6 +83,7 @@ enum OperationType {
   OpMove = 3;
   OpEatPlayer = 4;
   OpEatFood = 5;
+  OpPause = 6;
 }
 
 message Operation {
@@ -89,6 +94,7 @@ message Operation {
     MoveOperation moveOperation = 5;
     EatPlayerOperation eatPlayerOperation = 6;
     EatFoodOperation eatFoodOperation = 7;
+    PauseOperation pauseOperation = 8;
   }
 }
 
@@ -113,3 +119,5 @@ message EatFoodOperation {
   Vector2D foodPosition = 1;
   uint32 newRadius = 2;
 }
+
+message PauseOperation {}
