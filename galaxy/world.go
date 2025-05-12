@@ -199,6 +199,7 @@ func (w *World) broadcastNewPlayer(player *Player) {
 				Radius:   &player.Radius,
 				Color:    &player.Color,
 				Skin:     player.Skin,
+				Username: &player.Username,
 			},
 		},
 	}

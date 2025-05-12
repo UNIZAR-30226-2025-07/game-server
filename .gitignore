@@ -1,2 +1,4 @@
 flake.lock
 target
+server
+server.exe
