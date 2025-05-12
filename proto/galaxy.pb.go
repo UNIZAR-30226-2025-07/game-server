@@ -32,6 +32,7 @@ const (
 	EventType_EvDestroyFood   EventType = 5
 	EventType_EvDestroyPlayer EventType = 6
 	EventType_EvJoin          EventType = 7
+	EventType_EvPause         EventType = 8
 )
 
 // Enum value maps for EventType.
@@ -45,6 +46,7 @@ var (
 		5: "EvDestroyFood",
 		6: "EvDestroyPlayer",
 		7: "EvJoin",
+		8: "EvPause",
 	}
 	EventType_value = map[string]int32{
 		"EvUnused":        0,
@@ -55,6 +57,7 @@ var (
 		"EvDestroyFood":   5,
 		"EvDestroyPlayer": 6,
 		"EvJoin":          7,
+		"EvPause":         8,
 	}
 )
 
@@ -94,6 +97,7 @@ const (
 	OperationType_OpMove      OperationType = 3
 	OperationType_OpEatPlayer OperationType = 4
 	OperationType_OpEatFood   OperationType = 5
+	OperationType_OpPause     OperationType = 6
 )
 
 // Enum value maps for OperationType.
@@ -105,6 +109,7 @@ var (
 		3: "OpMove",
 		4: "OpEatPlayer",
 		5: "OpEatFood",
+		6: "OpPause",
 	}
 	OperationType_value = map[string]int32{
 		"OpUnused":    0,
@@ -113,6 +118,7 @@ var (
 		"OpMove":      3,
 		"OpEatPlayer": 4,
 		"OpEatFood":   5,
+		"OpPause":     6,
 	}
 )
 
@@ -207,6 +213,7 @@ type Event struct {
 	//	*Event_DestroyFoodEvent
 	//	*Event_DestroyPlayerEvent
 	//	*Event_JoinEvent
+	//	*Event_PauseEvent
 	EventData     isEvent_EventData `protobuf_oneof:"eventData"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -319,6 +326,15 @@ func (x *Event) GetJoinEvent() *JoinEvent {
 	return nil
 }
 
+func (x *Event) GetPauseEvent() *PauseEvent {
+	if x != nil {
+		if x, ok := x.EventData.(*Event_PauseEvent); ok {
+			return x.PauseEvent
+		}
+	}
+	return nil
+}
+
 type isEvent_EventData interface {
 	isEvent_EventData()
 }
@@ -351,6 +367,10 @@ type Event_JoinEvent struct {
 	JoinEvent *JoinEvent `protobuf:"bytes,8,opt,name=joinEvent,oneof"`
 }
 
+type Event_PauseEvent struct {
+	PauseEvent *PauseEvent `protobuf:"bytes,9,opt,name=pauseEvent,oneof"`
+}
+
 func (*Event_NewPlayerEvent) isEvent_EventData() {}
 
 func (*Event_NewFoodEvent) isEvent_EventData() {}
@@ -364,6 +384,8 @@ func (*Event_DestroyFoodEvent) isEvent_EventData() {}
 func (*Event_DestroyPlayerEvent) isEvent_EventData() {}
 
 func (*Event_JoinEvent) isEvent_EventData() {}
+
+func (*Event_PauseEvent) isEvent_EventData() {}
 
 type NewPlayerEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -769,6 +791,42 @@ func (x *DestroyPlayerEvent) GetPlayerID() []byte {
 	return nil
 }
 
+type PauseEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PauseEvent) Reset() {
+	*x = PauseEvent{}
+	mi := &file_proto_galaxy_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PauseEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseEvent) ProtoMessage() {}
+
+func (x *PauseEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_galaxy_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseEvent.ProtoReflect.Descriptor instead.
+func (*PauseEvent) Descriptor() ([]byte, []int) {
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{9}
+}
+
 type Operation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OperationType *OperationType         `protobuf:"varint,2,opt,name=operationType,enum=galaxy.OperationType" json:"operationType,omitempty"`
@@ -779,6 +837,7 @@ type Operation struct {
 	//	*Operation_MoveOperation
 	//	*Operation_EatPlayerOperation
 	//	*Operation_EatFoodOperation
+	//	*Operation_PauseOperation
 	OperationData isOperation_OperationData `protobuf_oneof:"operationData"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -786,7 +845,7 @@ type Operation struct {
 
 func (x *Operation) Reset() {
 	*x = Operation{}
-	mi := &file_proto_galaxy_proto_msgTypes[9]
+	mi := &file_proto_galaxy_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +857,7 @@ func (x *Operation) String() string {
 func (*Operation) ProtoMessage() {}
 
 func (x *Operation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_galaxy_proto_msgTypes[9]
+	mi := &file_proto_galaxy_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +870,7 @@ func (x *Operation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Operation.ProtoReflect.Descriptor instead.
 func (*Operation) Descriptor() ([]byte, []int) {
-	return file_proto_galaxy_proto_rawDescGZIP(), []int{9}
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Operation) GetOperationType() OperationType {
@@ -873,6 +932,15 @@ func (x *Operation) GetEatFoodOperation() *EatFoodOperation {
 	return nil
 }
 
+func (x *Operation) GetPauseOperation() *PauseOperation {
+	if x != nil {
+		if x, ok := x.OperationData.(*Operation_PauseOperation); ok {
+			return x.PauseOperation
+		}
+	}
+	return nil
+}
+
 type isOperation_OperationData interface {
 	isOperation_OperationData()
 }
@@ -897,6 +965,10 @@ type Operation_EatFoodOperation struct {
 	EatFoodOperation *EatFoodOperation `protobuf:"bytes,7,opt,name=eatFoodOperation,oneof"`
 }
 
+type Operation_PauseOperation struct {
+	PauseOperation *PauseOperation `protobuf:"bytes,8,opt,name=pauseOperation,oneof"`
+}
+
 func (*Operation_JoinOperation) isOperation_OperationData() {}
 
 func (*Operation_LeaveOperation) isOperation_OperationData() {}
@@ -906,6 +978,8 @@ func (*Operation_MoveOperation) isOperation_OperationData() {}
 func (*Operation_EatPlayerOperation) isOperation_OperationData() {}
 
 func (*Operation_EatFoodOperation) isOperation_OperationData() {}
+
+func (*Operation_PauseOperation) isOperation_OperationData() {}
 
 type JoinOperation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -920,7 +994,7 @@ type JoinOperation struct {
 
 func (x *JoinOperation) Reset() {
 	*x = JoinOperation{}
-	mi := &file_proto_galaxy_proto_msgTypes[10]
+	mi := &file_proto_galaxy_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -932,7 +1006,7 @@ func (x *JoinOperation) String() string {
 func (*JoinOperation) ProtoMessage() {}
 
 func (x *JoinOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_galaxy_proto_msgTypes[10]
+	mi := &file_proto_galaxy_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +1019,7 @@ func (x *JoinOperation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinOperation.ProtoReflect.Descriptor instead.
 func (*JoinOperation) Descriptor() ([]byte, []int) {
-	return file_proto_galaxy_proto_rawDescGZIP(), []int{10}
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *JoinOperation) GetPlayerID() []byte {
@@ -991,7 +1065,7 @@ type LeaveOperation struct {
 
 func (x *LeaveOperation) Reset() {
 	*x = LeaveOperation{}
-	mi := &file_proto_galaxy_proto_msgTypes[11]
+	mi := &file_proto_galaxy_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1003,7 +1077,7 @@ func (x *LeaveOperation) String() string {
 func (*LeaveOperation) ProtoMessage() {}
 
 func (x *LeaveOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_galaxy_proto_msgTypes[11]
+	mi := &file_proto_galaxy_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1016,7 +1090,7 @@ func (x *LeaveOperation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveOperation.ProtoReflect.Descriptor instead.
 func (*LeaveOperation) Descriptor() ([]byte, []int) {
-	return file_proto_galaxy_proto_rawDescGZIP(), []int{11}
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{12}
 }
 
 type MoveOperation struct {
@@ -1028,7 +1102,7 @@ type MoveOperation struct {
 
 func (x *MoveOperation) Reset() {
 	*x = MoveOperation{}
-	mi := &file_proto_galaxy_proto_msgTypes[12]
+	mi := &file_proto_galaxy_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1040,7 +1114,7 @@ func (x *MoveOperation) String() string {
 func (*MoveOperation) ProtoMessage() {}
 
 func (x *MoveOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_galaxy_proto_msgTypes[12]
+	mi := &file_proto_galaxy_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1053,7 +1127,7 @@ func (x *MoveOperation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveOperation.ProtoReflect.Descriptor instead.
 func (*MoveOperation) Descriptor() ([]byte, []int) {
-	return file_proto_galaxy_proto_rawDescGZIP(), []int{12}
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *MoveOperation) GetPosition() *Vector2D {
@@ -1073,7 +1147,7 @@ type EatPlayerOperation struct {
 
 func (x *EatPlayerOperation) Reset() {
 	*x = EatPlayerOperation{}
-	mi := &file_proto_galaxy_proto_msgTypes[13]
+	mi := &file_proto_galaxy_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1085,7 +1159,7 @@ func (x *EatPlayerOperation) String() string {
 func (*EatPlayerOperation) ProtoMessage() {}
 
 func (x *EatPlayerOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_galaxy_proto_msgTypes[13]
+	mi := &file_proto_galaxy_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1098,7 +1172,7 @@ func (x *EatPlayerOperation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EatPlayerOperation.ProtoReflect.Descriptor instead.
 func (*EatPlayerOperation) Descriptor() ([]byte, []int) {
-	return file_proto_galaxy_proto_rawDescGZIP(), []int{13}
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *EatPlayerOperation) GetPlayerEaten() []byte {
@@ -1125,7 +1199,7 @@ type EatFoodOperation struct {
 
 func (x *EatFoodOperation) Reset() {
 	*x = EatFoodOperation{}
-	mi := &file_proto_galaxy_proto_msgTypes[14]
+	mi := &file_proto_galaxy_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1137,7 +1211,7 @@ func (x *EatFoodOperation) String() string {
 func (*EatFoodOperation) ProtoMessage() {}
 
 func (x *EatFoodOperation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_galaxy_proto_msgTypes[14]
+	mi := &file_proto_galaxy_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1150,7 +1224,7 @@ func (x *EatFoodOperation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EatFoodOperation.ProtoReflect.Descriptor instead.
 func (*EatFoodOperation) Descriptor() ([]byte, []int) {
-	return file_proto_galaxy_proto_rawDescGZIP(), []int{14}
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *EatFoodOperation) GetFoodPosition() *Vector2D {
@@ -1167,6 +1241,42 @@ func (x *EatFoodOperation) GetNewRadius() uint32 {
 	return 0
 }
 
+type PauseOperation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PauseOperation) Reset() {
+	*x = PauseOperation{}
+	mi := &file_proto_galaxy_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PauseOperation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PauseOperation) ProtoMessage() {}
+
+func (x *PauseOperation) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_galaxy_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PauseOperation.ProtoReflect.Descriptor instead.
+func (*PauseOperation) Descriptor() ([]byte, []int) {
+	return file_proto_galaxy_proto_rawDescGZIP(), []int{16}
+}
+
 var File_proto_galaxy_proto protoreflect.FileDescriptor
 
 const file_proto_galaxy_proto_rawDesc = "" +
@@ -1174,7 +1284,7 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\x12proto/galaxy.proto\x12\x06galaxy\"&\n" +
 	"\bVector2D\x12\f\n" +
 	"\x01X\x18\x01 \x01(\rR\x01X\x12\f\n" +
-	"\x01Y\x18\x02 \x01(\rR\x01Y\"\x96\x04\n" +
+	"\x01Y\x18\x02 \x01(\rR\x01Y\"\xcc\x04\n" +
 	"\x05Event\x12/\n" +
 	"\teventType\x18\x01 \x01(\x0e2\x11.galaxy.EventTypeR\teventType\x12@\n" +
 	"\x0enewPlayerEvent\x18\x02 \x01(\v2\x16.galaxy.NewPlayerEventH\x00R\x0enewPlayerEvent\x12:\n" +
@@ -1183,7 +1293,10 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\x0fplayerGrowEvent\x18\x05 \x01(\v2\x17.galaxy.PlayerGrowEventH\x00R\x0fplayerGrowEvent\x12F\n" +
 	"\x10destroyFoodEvent\x18\x06 \x01(\v2\x18.galaxy.DestroyFoodEventH\x00R\x10destroyFoodEvent\x12L\n" +
 	"\x12destroyPlayerEvent\x18\a \x01(\v2\x1a.galaxy.DestroyPlayerEventH\x00R\x12destroyPlayerEvent\x121\n" +
-	"\tjoinEvent\x18\b \x01(\v2\x11.galaxy.JoinEventH\x00R\tjoinEventB\v\n" +
+	"\tjoinEvent\x18\b \x01(\v2\x11.galaxy.JoinEventH\x00R\tjoinEvent\x124\n" +
+	"\n" +
+	"pauseEvent\x18\t \x01(\v2\x12.galaxy.PauseEventH\x00R\n" +
+	"pauseEventB\v\n" +
 	"\teventData\"\xb8\x01\n" +
 	"\x0eNewPlayerEvent\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12,\n" +
@@ -1210,14 +1323,17 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\x10DestroyFoodEvent\x12,\n" +
 	"\bposition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\bposition\"0\n" +
 	"\x12DestroyPlayerEvent\x12\x1a\n" +
-	"\bplayerID\x18\x01 \x01(\fR\bplayerID\"\xaf\x03\n" +
+	"\bplayerID\x18\x01 \x01(\fR\bplayerID\"\f\n" +
+	"\n" +
+	"PauseEvent\"\xf1\x03\n" +
 	"\tOperation\x12;\n" +
 	"\roperationType\x18\x02 \x01(\x0e2\x15.galaxy.OperationTypeR\roperationType\x12=\n" +
 	"\rjoinOperation\x18\x03 \x01(\v2\x15.galaxy.JoinOperationH\x00R\rjoinOperation\x12@\n" +
 	"\x0eleaveOperation\x18\x04 \x01(\v2\x16.galaxy.LeaveOperationH\x00R\x0eleaveOperation\x12=\n" +
 	"\rmoveOperation\x18\x05 \x01(\v2\x15.galaxy.MoveOperationH\x00R\rmoveOperation\x12L\n" +
 	"\x12eatPlayerOperation\x18\x06 \x01(\v2\x1a.galaxy.EatPlayerOperationH\x00R\x12eatPlayerOperation\x12F\n" +
-	"\x10eatFoodOperation\x18\a \x01(\v2\x18.galaxy.EatFoodOperationH\x00R\x10eatFoodOperationB\x0f\n" +
+	"\x10eatFoodOperation\x18\a \x01(\v2\x18.galaxy.EatFoodOperationH\x00R\x10eatFoodOperation\x12@\n" +
+	"\x0epauseOperation\x18\b \x01(\v2\x16.galaxy.PauseOperationH\x00R\x0epauseOperationB\x0f\n" +
 	"\roperationData\"\x89\x01\n" +
 	"\rJoinOperation\x12\x1a\n" +
 	"\bplayerID\x18\x01 \x01(\fR\bplayerID\x12\x1a\n" +
@@ -1233,7 +1349,8 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\tnewRadius\x18\x02 \x01(\rR\tnewRadius\"f\n" +
 	"\x10EatFoodOperation\x124\n" +
 	"\ffoodPosition\x18\x01 \x01(\v2\x10.galaxy.Vector2DR\ffoodPosition\x12\x1c\n" +
-	"\tnewRadius\x18\x02 \x01(\rR\tnewRadius*\x91\x01\n" +
+	"\tnewRadius\x18\x02 \x01(\rR\tnewRadius\"\x10\n" +
+	"\x0ePauseOperation*\x9e\x01\n" +
 	"\tEventType\x12\f\n" +
 	"\bEvUnused\x10\x00\x12\r\n" +
 	"\tEvNewFood\x10\x01\x12\x0f\n" +
@@ -1243,7 +1360,8 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\rEvDestroyFood\x10\x05\x12\x13\n" +
 	"\x0fEvDestroyPlayer\x10\x06\x12\n" +
 	"\n" +
-	"\x06EvJoin\x10\a*b\n" +
+	"\x06EvJoin\x10\a\x12\v\n" +
+	"\aEvPause\x10\b*o\n" +
 	"\rOperationType\x12\f\n" +
 	"\bOpUnused\x10\x00\x12\n" +
 	"\n" +
@@ -1252,7 +1370,8 @@ const file_proto_galaxy_proto_rawDesc = "" +
 	"\n" +
 	"\x06OpMove\x10\x03\x12\x0f\n" +
 	"\vOpEatPlayer\x10\x04\x12\r\n" +
-	"\tOpEatFood\x10\x05B\tZ\a./protob\beditionsp\xe8\a"
+	"\tOpEatFood\x10\x05\x12\v\n" +
+	"\aOpPause\x10\x06B\tZ\a./protob\beditionsp\xe8\a"
 
 var (
 	file_proto_galaxy_proto_rawDescOnce sync.Once
@@ -1267,7 +1386,7 @@ func file_proto_galaxy_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_galaxy_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_galaxy_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_galaxy_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_proto_galaxy_proto_goTypes = []any{
 	(EventType)(0),             // 0: galaxy.EventType
 	(OperationType)(0),         // 1: galaxy.OperationType
@@ -1280,12 +1399,14 @@ var file_proto_galaxy_proto_goTypes = []any{
 	(*PlayerGrowEvent)(nil),    // 8: galaxy.PlayerGrowEvent
 	(*DestroyFoodEvent)(nil),   // 9: galaxy.DestroyFoodEvent
 	(*DestroyPlayerEvent)(nil), // 10: galaxy.DestroyPlayerEvent
-	(*Operation)(nil),          // 11: galaxy.Operation
-	(*JoinOperation)(nil),      // 12: galaxy.JoinOperation
-	(*LeaveOperation)(nil),     // 13: galaxy.LeaveOperation
-	(*MoveOperation)(nil),      // 14: galaxy.MoveOperation
-	(*EatPlayerOperation)(nil), // 15: galaxy.EatPlayerOperation
-	(*EatFoodOperation)(nil),   // 16: galaxy.EatFoodOperation
+	(*PauseEvent)(nil),         // 11: galaxy.PauseEvent
+	(*Operation)(nil),          // 12: galaxy.Operation
+	(*JoinOperation)(nil),      // 13: galaxy.JoinOperation
+	(*LeaveOperation)(nil),     // 14: galaxy.LeaveOperation
+	(*MoveOperation)(nil),      // 15: galaxy.MoveOperation
+	(*EatPlayerOperation)(nil), // 16: galaxy.EatPlayerOperation
+	(*EatFoodOperation)(nil),   // 17: galaxy.EatFoodOperation
+	(*PauseOperation)(nil),     // 18: galaxy.PauseOperation
 }
 var file_proto_galaxy_proto_depIdxs = []int32{
 	0,  // 0: galaxy.Event.eventType:type_name -> galaxy.EventType
@@ -1296,24 +1417,26 @@ var file_proto_galaxy_proto_depIdxs = []int32{
 	9,  // 5: galaxy.Event.destroyFoodEvent:type_name -> galaxy.DestroyFoodEvent
 	10, // 6: galaxy.Event.destroyPlayerEvent:type_name -> galaxy.DestroyPlayerEvent
 	5,  // 7: galaxy.Event.joinEvent:type_name -> galaxy.JoinEvent
-	2,  // 8: galaxy.NewPlayerEvent.position:type_name -> galaxy.Vector2D
-	2,  // 9: galaxy.JoinEvent.position:type_name -> galaxy.Vector2D
-	2,  // 10: galaxy.NewFoodEvent.position:type_name -> galaxy.Vector2D
-	2,  // 11: galaxy.PlayerMoveEvent.position:type_name -> galaxy.Vector2D
-	2,  // 12: galaxy.DestroyFoodEvent.position:type_name -> galaxy.Vector2D
-	1,  // 13: galaxy.Operation.operationType:type_name -> galaxy.OperationType
-	12, // 14: galaxy.Operation.joinOperation:type_name -> galaxy.JoinOperation
-	13, // 15: galaxy.Operation.leaveOperation:type_name -> galaxy.LeaveOperation
-	14, // 16: galaxy.Operation.moveOperation:type_name -> galaxy.MoveOperation
-	15, // 17: galaxy.Operation.eatPlayerOperation:type_name -> galaxy.EatPlayerOperation
-	16, // 18: galaxy.Operation.eatFoodOperation:type_name -> galaxy.EatFoodOperation
-	2,  // 19: galaxy.MoveOperation.position:type_name -> galaxy.Vector2D
-	2,  // 20: galaxy.EatFoodOperation.foodPosition:type_name -> galaxy.Vector2D
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	11, // 8: galaxy.Event.pauseEvent:type_name -> galaxy.PauseEvent
+	2,  // 9: galaxy.NewPlayerEvent.position:type_name -> galaxy.Vector2D
+	2,  // 10: galaxy.JoinEvent.position:type_name -> galaxy.Vector2D
+	2,  // 11: galaxy.NewFoodEvent.position:type_name -> galaxy.Vector2D
+	2,  // 12: galaxy.PlayerMoveEvent.position:type_name -> galaxy.Vector2D
+	2,  // 13: galaxy.DestroyFoodEvent.position:type_name -> galaxy.Vector2D
+	1,  // 14: galaxy.Operation.operationType:type_name -> galaxy.OperationType
+	13, // 15: galaxy.Operation.joinOperation:type_name -> galaxy.JoinOperation
+	14, // 16: galaxy.Operation.leaveOperation:type_name -> galaxy.LeaveOperation
+	15, // 17: galaxy.Operation.moveOperation:type_name -> galaxy.MoveOperation
+	16, // 18: galaxy.Operation.eatPlayerOperation:type_name -> galaxy.EatPlayerOperation
+	17, // 19: galaxy.Operation.eatFoodOperation:type_name -> galaxy.EatFoodOperation
+	18, // 20: galaxy.Operation.pauseOperation:type_name -> galaxy.PauseOperation
+	2,  // 21: galaxy.MoveOperation.position:type_name -> galaxy.Vector2D
+	2,  // 22: galaxy.EatFoodOperation.foodPosition:type_name -> galaxy.Vector2D
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_proto_galaxy_proto_init() }
@@ -1329,13 +1452,15 @@ func file_proto_galaxy_proto_init() {
 		(*Event_DestroyFoodEvent)(nil),
 		(*Event_DestroyPlayerEvent)(nil),
 		(*Event_JoinEvent)(nil),
+		(*Event_PauseEvent)(nil),
 	}
-	file_proto_galaxy_proto_msgTypes[9].OneofWrappers = []any{
+	file_proto_galaxy_proto_msgTypes[10].OneofWrappers = []any{
 		(*Operation_JoinOperation)(nil),
 		(*Operation_LeaveOperation)(nil),
 		(*Operation_MoveOperation)(nil),
 		(*Operation_EatPlayerOperation)(nil),
 		(*Operation_EatFoodOperation)(nil),
+		(*Operation_PauseOperation)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1343,7 +1468,7 @@ func file_proto_galaxy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_galaxy_proto_rawDesc), len(file_proto_galaxy_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

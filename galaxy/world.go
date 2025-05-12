@@ -293,10 +293,37 @@ func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Oper
 		w.operationEatPlayer(player, operation.GetEatPlayerOperation())
 	case pb.OperationType_OpLeave:
 		w.removePlayer(player)
+	case pb.OperationType_OpPause:
+		w.pauseServer()
 	default:
 		log.Printf("unimplemented event: %v", operation.OperationType.Enum().String())
 		return
 	}
+}
+
+func (w *World) pauseServer() {
+	if w.gameID == nil {
+		// pause is not implemented in public matches
+		return
+	}
+
+	pauseEvent := &pb.Event{
+		EventType: pb.EventType_EvPause.Enum(),
+		EventData: &pb.Event_PauseEvent{},
+	}
+
+	w.broadcastEvent(pauseEvent)
+	w.database.PausePrivateGame(*w.gameID)
+	w.database.UpdateValues()
+
+	w.playersMutex.Lock()
+	for id, player := range w.players {
+		player.Disconnect()
+		delete(w.players, id)
+	}
+	w.playersMutex.Unlock()
+
+	os.Exit(0)
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
