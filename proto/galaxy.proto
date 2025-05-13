@@ -53,9 +53,13 @@ message JoinEvent {
   string skin = 5;
 }
 
-message NewFoodEvent {
+message Food {
   Vector2D position = 1;
   uint32 color = 2;
+}
+
+message NewFoodEvent {
+  repeated Food food = 1;
 }
 
 message PlayerMoveEvent {
