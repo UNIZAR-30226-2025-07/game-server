@@ -474,8 +474,12 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 
 	playerToEatID, _ := uuid.FromBytes(operation.PlayerEaten)
 	w.playersMutex.RLock()
-	playerToEat := w.players[playerToEatID]
+	playerToEat, exists := w.players[playerToEatID]
 	w.playersMutex.RUnlock()
+	if !exists {
+		log.Printf("...trying to eat a dead player")
+		return
+	}
 
 	if (player.Radius <= playerToEat.Radius) {
 		log.Printf("player %v tried to eat player %v while being equal or smaller size", player.ConnectionID, playerToEat.ConnectionID);
