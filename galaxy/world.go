@@ -453,6 +453,17 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 
 func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperation) {
 	log.Printf("operationEatPlayer, player = %v, operation = %v", player.PlayerID.String(), operation.String())
+
+	playerToEatID, _ := uuid.FromBytes(operation.PlayerEaten)
+	w.playersMutex.RLock()
+	playerToEat := w.players[playerToEatID]
+	w.playersMutex.RUnlock()
+
+	if (player.Radius <= playerToEat.Radius) {
+		log.Printf("player %v tried to eat player %v while being equal or smaller size", player.ConnectionID, playerToEat.ConnectionID);
+		return
+	}
+
 	player.UpdateRadius(*operation.NewRadius)
 
 	playerIDBytes, _ := player.PlayerID.MarshalBinary()
