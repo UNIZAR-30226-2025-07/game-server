@@ -324,17 +324,18 @@ func (w *World) pauseServer() {
 	}
 
 	w.broadcastEvent(pauseEvent)
+	w.playersMutex.Lock()
 	w.database.PausePrivateGame(*w.gameID)
 	w.database.UpdateValues(w)
 
-	w.playersMutex.Lock()
 	for id, player := range w.players {
 		player.Disconnect()
 		delete(w.players, id)
 	}
 	w.playersMutex.Unlock()
 
-	os.Exit(0)
+	log.Printf("restarting private server")
+	w.gameID = nil;
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
