@@ -18,7 +18,7 @@ type Database struct {
 
 type postData struct {
 	UserID   string `json:"user_id"`
-	Kind     string `json:"type"`
+	Kind     string `json:"achievement_type"`
 	Quantity uint32 `json:"quantity"`
 }
 
