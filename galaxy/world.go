@@ -362,11 +362,12 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 
 		if w.gameID == nil {
 			w.gameID = joinOperation.GameID
+			log.Printf("set up gameID: %v", w.gameID)
 			w.database.StartPrivateGame(*w.gameID)
 			w.savedPlayers = w.database.GetValues(*w.gameID)
 		} else {
-			if w.gameID != joinOperation.GameID {
-				log.Printf("ERROR: a player tried joining a private server with the wrong gameID, kicking him.")
+			if *w.gameID != *joinOperation.GameID {
+				log.Printf("ERROR: a player tried joining a private server with the wrong gameID, kicking him. gameID = %v", *joinOperation.GameID)
 				return
 			}
 		}
