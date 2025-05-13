@@ -339,7 +339,7 @@ func (w *World) pauseServer() {
 	w.playersMutex.Unlock()
 
 	log.Printf("restarting private server")
-	w.gameID = nil;
+	w.gameID = nil
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
@@ -378,12 +378,15 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 		}
 
 		for _, savedPlayer := range w.savedPlayers {
+			if savedPlayer.Score == 0 {
+				continue
+			}
 			if savedPlayer.PlayerID == player.PlayerID.String() {
 				player.UpdatePosition(&Vector2D{
 					X: savedPlayer.X,
 					Y: savedPlayer.Y,
 				})
-				player.UpdateRadius(savedPlayer.Score)
+				player.UpdateRadius(savedPlayer.Score * 10)
 				break
 			}
 		}
@@ -442,8 +445,8 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 				EventData: &pb.Event_NewFoodEvent{
 					NewFoodEvent: &pb.NewFoodEvent{
 						Food: []*pb.Food{{
-								Position: newFood.position.toPacket(),
-								Color:    &newFood.color}}}},
+							Position: newFood.position.toPacket(),
+							Color:    &newFood.color}}}},
 			}
 
 			w.broadcastEvent(newFoodEvent)
@@ -488,8 +491,8 @@ func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperat
 		return
 	}
 
-	if (player.Radius <= playerToEat.Radius) {
-		log.Printf("player %v tried to eat player %v while being equal or smaller size", player.ConnectionID, playerToEat.ConnectionID);
+	if player.Radius <= playerToEat.Radius {
+		log.Printf("player %v tried to eat player %v while being equal or smaller size", player.ConnectionID, playerToEat.ConnectionID)
 		return
 	}
 
