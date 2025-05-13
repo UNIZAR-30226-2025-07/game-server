@@ -87,6 +87,7 @@ func (p *Player) UpdatePlayerID(playerID uuid.UUID) {
 }
 
 func (p *Player) UpdateUsername(username string) {
+	log.Printf("updating username for %v to %v", p.ConnectionID, username)
 	p.Username = username;
 }
 
