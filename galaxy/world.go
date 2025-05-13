@@ -246,14 +246,16 @@ func (w *World) sendState(receiver *Player) {
 					Radius:   &player.Radius,
 					Color:    &player.Color,
 					Skin:     player.Skin,
+					Username: &player.Username,
 				},
 			},
 		}
 
-		log.Printf("sending state %v to player %v", player.PlayerID, receiver.PlayerID)
+		log.Printf("sending state %v to player %v", player.ConnectionID, receiver.ConnectionID)
 
 		w.sendEvent(receiver, event)
 	}
+	time.Sleep(200*time.Millisecond)
 
 	for _, food := range w.food {
 		event := &pb.Event{
@@ -266,7 +268,7 @@ func (w *World) sendState(receiver *Player) {
 			},
 		}
 
-		go w.sendEvent(receiver, event)
+		w.sendEvent(receiver, event)
 	}
 }
 
