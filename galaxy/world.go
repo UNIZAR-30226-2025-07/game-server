@@ -205,6 +205,7 @@ func (w *World) broadcastNewPlayer(player *Player) {
 	}
 
 	w.broadcastEvent(event)
+	time.Sleep(100*time.Millisecond)
 }
 
 func (w *World) sendJoin(player *Player) {
@@ -254,6 +255,7 @@ func (w *World) sendState(receiver *Player) {
 		log.Printf("sending state %v to player %v", player.ConnectionID, receiver.ConnectionID)
 
 		w.sendEvent(receiver, event)
+		time.Sleep(100*time.Millisecond)
 	}
 	time.Sleep(200*time.Millisecond)
 
