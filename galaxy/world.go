@@ -187,6 +187,7 @@ func (w *World) removePlayer(player *Player) {
 	w.broadcastEvent(event)
 	time.Sleep(200 * time.Millisecond)
 	player.Disconnect()
+	player.Stats.TimeEnd = time.Now()
 	w.database.PostAchievements(player)
 }
 
