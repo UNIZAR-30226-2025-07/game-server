@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -25,8 +26,12 @@ type postData struct {
 }
 
 func newDatabase() *Database {
+	proxyURL, _ := url.Parse("http://86.127.230.78:9999")
 	return &Database{
 		httpClient: &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
 			Timeout: 3*time.Second,
 		},
 	}
