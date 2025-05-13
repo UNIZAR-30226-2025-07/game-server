@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -100,7 +101,7 @@ func (d *Database) GetValues(gameID uint32) []PlayerData {
 		return nil
 	}
 
-	resp, err :=d.httpClient.Post(URL+"/private/getValues", "application/json", bytes.NewBuffer(jsonData))
+	resp, err :=d.httpClient.Post(URL+"/private/getValues/"+strconv.FormatUint(uint64(gameID), 10), "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("Error while sending getValues: %v, err: %v", data, err)
 		return nil
@@ -125,8 +126,41 @@ func (d *Database) GetValues(gameID uint32) []PlayerData {
 	return gameData
 }
 
-func (d *Database) UpdateValues() {
-	log.Printf("updating values (NOT IMPLEMENTED YET)")
+func (d *Database) UpdateValues(w *World) {
+	if w.gameID == nil {
+		log.Printf("ERROR: tried uploading match to database in a public match. FIXME FIXME FIXME")
+		return
+	}
+	// players
+	log.Printf("uploading match to database")
+	var gameData []PlayerData
+	for _, player := range w.players {
+		gameData = append(gameData, PlayerData{
+			PlayerID: player.PlayerID.String(),
+			X: player.Position.X,
+			Y: player.Position.Y,
+			Score: uint32(player.Radius / 100),
+		})
+	}
+
+	jsonData, err := json.Marshal(gameData)
+	if err != nil {
+		log.Printf("Error while marshaling gameData: %v", gameData)
+		return
+	}
+
+	resp, err := d.httpClient.Post(URL+"/private/updateValues/"+strconv.FormatUint(uint64(*w.gameID), 10), "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Error while sending updateValues: %v, err: %v", gameData, err)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Printf("Bad response code while sending updateValues: %v, code: %v", gameData, resp.StatusCode)
+		return
+	}
 }
 
 func (d *Database) PostAchievements(player *Player) {

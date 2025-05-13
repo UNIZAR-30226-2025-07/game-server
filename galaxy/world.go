@@ -324,7 +324,7 @@ func (w *World) pauseServer() {
 
 	w.broadcastEvent(pauseEvent)
 	w.database.PausePrivateGame(*w.gameID)
-	w.database.UpdateValues()
+	w.database.UpdateValues(w)
 
 	w.playersMutex.Lock()
 	for id, player := range w.players {
