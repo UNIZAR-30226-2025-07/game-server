@@ -205,7 +205,7 @@ func (w *World) broadcastNewPlayer(player *Player) {
 	}
 
 	w.broadcastEvent(event)
-	time.Sleep(100*time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (w *World) sendJoin(player *Player) {
@@ -255,23 +255,28 @@ func (w *World) sendState(receiver *Player) {
 		log.Printf("sending state %v to player %v", player.ConnectionID, receiver.ConnectionID)
 
 		w.sendEvent(receiver, event)
-		time.Sleep(100*time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
-	time.Sleep(200*time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
+
+	var pbFoods []*pb.Food
 
 	for _, food := range w.food {
-		event := &pb.Event{
-			EventType: pb.EventType_EvNewFood.Enum(),
-			EventData: &pb.Event_NewFoodEvent{
-				NewFoodEvent: &pb.NewFoodEvent{
-					Position: food.position.toPacket(),
-					Color:    &food.color,
-				},
-			},
-		}
-
-		w.sendEvent(receiver, event)
+		pbFoods = append(pbFoods, &pb.Food{
+			Position: food.position.toPacket(),
+			Color:    &food.color,
+		})
 	}
+	event := &pb.Event{
+		EventType: pb.EventType_EvNewFood.Enum(),
+		EventData: &pb.Event_NewFoodEvent{
+			NewFoodEvent: &pb.NewFoodEvent{
+				Food: pbFoods,
+			},
+		},
+	}
+
+	w.sendEvent(receiver, event)
 }
 
 /// OPERATIONS
