@@ -27,7 +27,7 @@ type postData struct {
 func newDatabase() *Database {
 	return &Database{
 		httpClient: &http.Client{
-			Timeout: 3*time.Second,
+			Timeout: 3 * time.Second,
 		},
 	}
 }
@@ -88,13 +88,13 @@ type getValuesData struct {
 
 type PlayerData struct {
 	PlayerID string `json:"id_user"`
-	X uint32 `json:"x_position"`
-	Y uint32 `json:"y_position"`
-	Score uint32 `json:"score"`
+	X        uint32 `json:"x_position"`
+	Y        uint32 `json:"y_position"`
+	Score    uint32 `json:"score"`
 }
 
 func (d *Database) GetValues(gameID uint32) []PlayerData {
-	resp, err :=d.httpClient.Post(URL+"/private/getValues/"+strconv.FormatUint(uint64(gameID), 10), "application/json", bytes.NewBuffer(nil))
+	resp, err := d.httpClient.Get(URL + "/private/getValues/" + strconv.FormatUint(uint64(gameID), 10))
 	if err != nil {
 		log.Printf("Error while sending getValues: %v, err: %v", gameID, err)
 		return nil
@@ -130,9 +130,9 @@ func (d *Database) UpdateValues(w *World) {
 	for _, player := range w.players {
 		gameData = append(gameData, PlayerData{
 			PlayerID: player.PlayerID.String(),
-			X: player.Position.X,
-			Y: player.Position.Y,
-			Score: uint32(player.Radius / 10),
+			X:        player.Position.X,
+			Y:        player.Position.Y,
+			Score:    uint32(player.Radius / 10),
 		})
 	}
 
