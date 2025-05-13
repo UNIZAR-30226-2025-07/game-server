@@ -103,7 +103,7 @@ func (d *Database) GetValues(gameID uint32) []PlayerData {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Printf("Bad response code while sending getValues: %v, code: %v", data, resp.StatusCode)
+		log.Printf("Bad response code while sending getValues: %v, code: %v", gameID, resp.StatusCode)
 		return nil
 	}
 
