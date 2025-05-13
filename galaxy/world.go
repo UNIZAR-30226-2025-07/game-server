@@ -185,7 +185,7 @@ func (w *World) removePlayer(player *Player) {
 	}
 
 	w.broadcastEvent(event)
-	time.Sleep(200*time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	player.Disconnect()
 	w.database.PostAchievements(player)
 }
@@ -423,6 +423,24 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 	for i, f := range w.food {
 		if f.position == *foodPos {
 			w.food = append(w.food[:i], w.food[i+1:]...)
+			// add new food
+			newFood := Food{
+				position: *randomPosition(),
+				color:    randomColor(),
+			}
+			w.food = append(w.food, newFood)
+
+			newFoodEvent := &pb.Event{
+				EventType: pb.EventType_EvNewFood.Enum(),
+				EventData: &pb.Event_NewFoodEvent{
+					NewFoodEvent: &pb.NewFoodEvent{
+						Food: []*pb.Food{{
+								Position: newFood.position.toPacket(),
+								Color:    &newFood.color}}}},
+			}
+
+			w.broadcastEvent(newFoodEvent)
+			break
 		}
 	}
 	w.foodMutex.Unlock()
