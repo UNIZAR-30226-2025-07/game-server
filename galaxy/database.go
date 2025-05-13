@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 const (
@@ -25,7 +26,9 @@ type postData struct {
 
 func newDatabase() *Database {
 	return &Database{
-		httpClient: &http.Client{},
+		httpClient: &http.Client{
+			Timeout: 3*time.Second,
+		},
 	}
 }
 
@@ -132,14 +135,14 @@ func (d *Database) UpdateValues(w *World) {
 		return
 	}
 	// players
-	log.Printf("uploading match to database")
+	log.Printf("uploading match to database, len = %v", len(w.players))
 	var gameData []PlayerData
 	for _, player := range w.players {
 		gameData = append(gameData, PlayerData{
 			PlayerID: player.PlayerID.String(),
 			X: player.Position.X,
 			Y: player.Position.Y,
-			Score: uint32(player.Radius / 100),
+			Score: uint32(player.Radius / 10),
 		})
 	}
 
@@ -149,7 +152,7 @@ func (d *Database) UpdateValues(w *World) {
 		return
 	}
 
-	resp, err := d.httpClient.Post(URL+"/private/updateValues/"+strconv.FormatUint(uint64(*w.gameID), 10), "application/json", bytes.NewBuffer(jsonData))
+	resp, err := d.httpClient.Post(URL+"/private/uploadValues/"+strconv.FormatUint(uint64(*w.gameID), 10), "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("Error while sending updateValues: %v, err: %v", gameData, err)
 		return

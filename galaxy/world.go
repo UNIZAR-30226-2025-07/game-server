@@ -315,6 +315,7 @@ func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Oper
 func (w *World) pauseServer() {
 	if w.gameID == nil {
 		// pause is not implemented in public matches
+		log.Printf("pausing in a public server")
 		return
 	}
 
@@ -323,18 +324,22 @@ func (w *World) pauseServer() {
 		EventData: &pb.Event_PauseEvent{},
 	}
 
+	log.Printf("broadcasting pause")
 	w.broadcastEvent(pauseEvent)
+	w.playersMutex.Lock()
+	log.Printf("sending paused game")
 	w.database.PausePrivateGame(*w.gameID)
+	log.Printf("sending updatevalues")
 	w.database.UpdateValues(w)
 
-	w.playersMutex.Lock()
 	for id, player := range w.players {
 		player.Disconnect()
 		delete(w.players, id)
 	}
 	w.playersMutex.Unlock()
 
-	os.Exit(0)
+	log.Printf("restarting private server")
+	w.gameID = nil;
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
@@ -362,7 +367,7 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 
 		if w.gameID == nil {
 			w.gameID = joinOperation.GameID
-			log.Printf("set up gameID: %v", w.gameID)
+			log.Printf("set up gameID: %v", *w.gameID)
 			w.database.StartPrivateGame(*w.gameID)
 			w.savedPlayers = w.database.GetValues(*w.gameID)
 		} else {
