@@ -116,6 +116,11 @@ func (d *Database) GetValues(gameID uint32) []PlayerData {
 		return nil
 	}
 
+	log.Printf("len gameData: %v", len(gameData))
+	for _, player := range gameData {
+		log.Printf("player gotten from gameData: id=%v x=%v y=%v score=%v", player.PlayerID, player.X, player.Y, player.Score)
+	}
+
 	return gameData
 }
 
