@@ -171,7 +171,6 @@ func (w *World) removePlayer(player *Player) {
 		return
 	}
 
-	player.Disconnect()
 	delete(w.players, player.PlayerID)
 	w.playersMutex.Unlock()
 
@@ -186,6 +185,8 @@ func (w *World) removePlayer(player *Player) {
 	}
 
 	w.broadcastEvent(event)
+	time.Sleep(200*time.Millisecond)
+	player.Disconnect()
 	w.database.PostAchievements(player)
 }
 
