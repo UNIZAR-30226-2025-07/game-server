@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 const (
@@ -31,6 +32,7 @@ func newDatabase() *Database {
 			Transport: &http.Transport{
 				Proxy: http.ProxyURL(proxy),
 			},
+			Timeout: 3*time.Second,
 		},
 	}
 }
@@ -155,7 +157,7 @@ func (d *Database) UpdateValues(w *World) {
 		return
 	}
 
-	resp, err := d.httpClient.Post(URL+"/private/updateValues/"+strconv.FormatUint(uint64(*w.gameID), 10), "application/json", bytes.NewBuffer(jsonData))
+	resp, err := d.httpClient.Post(URL+"/private/uploadValues/"+strconv.FormatUint(uint64(*w.gameID), 10), "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Printf("Error while sending updateValues: %v, err: %v", gameData, err)
 		return
