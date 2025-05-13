@@ -94,19 +94,9 @@ type PlayerData struct {
 }
 
 func (d *Database) GetValues(gameID uint32) []PlayerData {
-	data := getValuesData{
-		GameID: gameID,
-	}
-
-	jsonData, err := json.Marshal(data)
+	resp, err :=d.httpClient.Post(URL+"/private/getValues/"+strconv.FormatUint(uint64(gameID), 10), "application/json", bytes.NewBuffer(nil))
 	if err != nil {
-		log.Printf("Error while marshaling getValuesData: %v", data)
-		return nil
-	}
-
-	resp, err :=d.httpClient.Post(URL+"/private/getValues/"+strconv.FormatUint(uint64(gameID), 10), "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		log.Printf("Error while sending getValues: %v, err: %v", data, err)
+		log.Printf("Error while sending getValues: %v, err: %v", gameID, err)
 		return nil
 	}
 
