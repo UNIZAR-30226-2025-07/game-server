@@ -1,0 +1,29 @@
+name: Execute Remote Script on Push
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          # Crear archivo de clave privada
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          
+          # Añadir servidor a known_hosts
+          ssh-keyscan -H galaxy.t2dc.es >> ~/.ssh/known_hosts
+
+      - name: Execute remote script
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              github-actions@galaxy.t2dc.es \
+              "sudo /home/github-actions/despliegue.sh"
