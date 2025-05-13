@@ -132,14 +132,14 @@ func (d *Database) UpdateValues(w *World) {
 		return
 	}
 	// players
-	log.Printf("uploading match to database")
+	log.Printf("uploading match to database, len = %v", len(w.players))
 	var gameData []PlayerData
 	for _, player := range w.players {
 		gameData = append(gameData, PlayerData{
 			PlayerID: player.PlayerID.String(),
 			X: player.Position.X,
 			Y: player.Position.Y,
-			Score: uint32(player.Radius / 100),
+			Score: uint32(player.Radius / 10),
 		})
 	}
 
