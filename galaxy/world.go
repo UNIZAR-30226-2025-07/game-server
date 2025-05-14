@@ -522,7 +522,10 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 		},
 	}
 
+	w.playersMutex.RLock()
 	w.broadcastEvent(eventGrow)
+	time.Sleep(50*time.Millisecond)
+	w.playersMutex.RUnlock()
 	w.broadcastEvent(eventFoodDestroy)
 }
 
