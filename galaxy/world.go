@@ -117,6 +117,34 @@ func NewWorld(factory ConnectionFactory) *World {
 	}
 }
 
+func (w *World) checkForBots() {
+	for {
+		w.playersMutex.RLock();
+		onlyBots := true
+		for _, player := range w.players {
+			if player.conn != nil {
+				onlyBots = false
+				break
+			}
+		}
+
+		if onlyBots {
+			return
+		}
+
+		if len(w.players) < 5 {
+			log.Printf("less than 5 players in game, creating bot")
+			bot := NewBot()
+			w.players[bot.player.PlayerID] = bot.player
+			w.broadcastNewPlayer(bot.player)
+			go bot.Start(w)
+		}
+
+		w.playersMutex.RUnlock();
+		time.Sleep(5 * time.Second)
+	}
+}
+
 func (w *World) sendEvent(player *Player, event *pb.Event) {
 	err := player.SendEvent(event)
 	if err != nil {
@@ -228,7 +256,7 @@ func (w *World) sendJoin(player *Player) {
 	}
 
 	log.Printf("sending join")
-	go w.sendEvent(player, event)
+	w.sendEvent(player, event)
 }
 
 func (w *World) sendState(receiver *Player) {
@@ -355,9 +383,13 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 		player.UpdateSkin(*joinOperation.Skin)
 	}
 
-	w.Lock()
+	w.playersMutex.Lock()
+	if len(w.players) == 0 {
+		// first player
+		go w.checkForBots()
+	}
 	w.players[player.PlayerID] = player
-	w.Unlock()
+	w.playersMutex.Unlock()
 
 	if w.privateServer {
 		if joinOperation.GameID == nil {
@@ -395,6 +427,7 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 	w.sendJoin(player)
 	w.sendState(player)
 	w.broadcastNewPlayer(player)
+
 
 	player.Stats.Lock()
 	player.Stats.TimeStart = time.Now()
