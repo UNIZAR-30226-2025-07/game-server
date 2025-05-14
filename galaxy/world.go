@@ -390,17 +390,6 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 		player.UpdateSkin(*joinOperation.Skin)
 	}
 
-	w.playersMutex.Lock()
-	if len(w.players) == 0 {
-		// first player
-		if !w.privateServer {
-			// only in public matches
-			go w.checkForBots()
-		}
-	}
-	w.players[player.PlayerID] = player
-	w.playersMutex.Unlock()
-
 	if w.privateServer {
 		if joinOperation.GameID == nil {
 			log.Printf("ERROR: a player tried joining a private server without gameID, kicking him.")
@@ -436,6 +425,18 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 
 	w.sendJoin(player)
 	w.sendState(player)
+
+	w.playersMutex.Lock()
+	if len(w.players) == 0 {
+		// first player
+		if !w.privateServer {
+			// only in public matches
+			go w.checkForBots()
+		}
+	}
+	w.players[player.PlayerID] = player
+	w.playersMutex.Unlock()
+
 	w.broadcastNewPlayer(player)
 
 	player.Stats.Lock()
