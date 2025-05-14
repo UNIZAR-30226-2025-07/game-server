@@ -321,7 +321,7 @@ func (w *World) sendState(receiver *Player) {
 /// OPERATIONS
 
 func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Operation) {
-	// log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
+	log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
 	w.playersMutex.RLock()
 	player, exists := w.playersConnection[connectionID]
 	w.playersMutex.RUnlock()
@@ -378,6 +378,7 @@ func (w *World) pauseServer() {
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
+	log.Printf("player joined %v, data=%v", player, joinOperation)
 	playerID, err := uuid.FromBytes(joinOperation.PlayerID)
 	if err != nil {
 		log.Printf("warn: unable to parse playerID: %v", err)
@@ -424,6 +425,7 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 	}
 
 	w.sendJoin(player)
+	time.Sleep(200*time.Millisecond)
 	w.sendState(player)
 
 	w.playersMutex.Lock()
