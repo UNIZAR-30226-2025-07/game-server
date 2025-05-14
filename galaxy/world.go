@@ -235,7 +235,9 @@ func (w *World) broadcastNewPlayer(player *Player) {
 	}
 
 	w.broadcastEvent(event)
+	w.playersMutex.Lock()
 	time.Sleep(100 * time.Millisecond)
+	w.playersMutex.Unlock()
 }
 
 func (w *World) sendJoin(player *Player) {
