@@ -217,6 +217,11 @@ func (w *World) removePlayer(player *Player) {
 	player.Disconnect()
 	player.Stats.TimeEnd = time.Now()
 	w.database.PostAchievements(player)
+
+	if w.privateServer && len(w.players) == 0 {
+		log.Printf("restarting private server as no players are online")
+		w.gameID = nil
+	}
 }
 
 func (w *World) broadcastNewPlayer(player *Player) {
