@@ -22,18 +22,19 @@ type Log struct {
 	KilledPlayers uint32
 	// Segundos jugados
 	TimeStart time.Time
-	TimeEnd time.Time
+	TimeEnd   time.Time
 }
 
 // Player represents a unique player in a game.
 type Player struct {
 	sync.RWMutex
-	PlayerID uuid.UUID
+	PlayerID     uuid.UUID
 	ConnectionID uuid.UUID
-	Position *Vector2D
-	Radius   uint32
-	Username string
-	Stats Log
+	Position     *Vector2D
+	Radius       uint32
+	Username     string
+	Stats        Log
+	disconnect   bool
 
 	// The skin the player currently is using,
 	// implemented for now as a simple RGB color.
@@ -44,22 +45,25 @@ type Player struct {
 	conn ClientConnection
 }
 
-
 func NewPlayer(connectionID uuid.UUID, conn ClientConnection) *Player {
 	return &Player{
 		// PlayerID: playerID,
 		ConnectionID: connectionID,
-		Position: randomPosition(),
-		Radius: STARTING_RADIUS,
-		Color: FoodColors[rand.Intn(len(FoodColors))],
-		Skin: nil,
-		conn: conn,
-		Username: "UNKNOWN",
-		Stats: Log{},
+		Position:     randomPosition(),
+		Radius:       STARTING_RADIUS,
+		Color:        FoodColors[rand.Intn(len(FoodColors))],
+		Skin:         nil,
+		conn:         conn,
+		Username:     "UNKNOWN",
+		Stats:        Log{},
+		disconnect:   false,
 	}
 }
 
 func (p *Player) SendEvent(event *pb.Event) error {
+	if p.conn == nil {
+		return nil
+	}
 	err := p.conn.SendEvent(event)
 	if err != nil {
 		log.Printf("error in sendEvent: %v", err)
@@ -70,6 +74,7 @@ func (p *Player) SendEvent(event *pb.Event) error {
 
 func (p *Player) Disconnect() {
 	log.Printf("disconnecting player %v", p.PlayerID)
+	p.disconnect = true
 	if p.conn != nil {
 		p.conn.Close()
 	}
@@ -83,20 +88,20 @@ func (p *Player) UpdatePosition(position *Vector2D) {
 }
 
 func (p *Player) UpdatePlayerID(playerID uuid.UUID) {
-	p.PlayerID = playerID;
+	p.PlayerID = playerID
 }
 
 func (p *Player) UpdateUsername(username string) {
 	log.Printf("updating username for %v to %v", p.ConnectionID, username)
-	p.Username = username;
+	p.Username = username
 }
 
 func (p *Player) UpdateColor(color uint32) {
-	p.Color = color;
+	p.Color = color
 }
 
 func (p *Player) UpdateSkin(skin string) {
-	p.Skin = &skin;
+	p.Skin = &skin
 }
 
 func (p *Player) GetPosition() *Vector2D {
@@ -109,13 +114,13 @@ func (p *Player) GetPosition() *Vector2D {
 }
 
 func (p *Player) UpdateRadius(radius uint32) {
-	log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius);
-	p.Lock();
-	p.Radius = radius;
+	log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius)
+	p.Lock()
+	p.Radius = radius
 
-	p.Stats.Lock();
-	p.Stats.Score = radius;
-	p.Stats.Unlock();
+	p.Stats.Lock()
+	p.Stats.Score = radius
+	p.Stats.Unlock()
 
-	p.Unlock();
+	p.Unlock()
 }
