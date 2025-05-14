@@ -149,7 +149,12 @@ func (b *Bot) performPathfinding(w *World) {
 		return
 	}
 
-	bestTarget := foodTargets[0]
+	var bestTarget *Vector2D
+	if len(foodTargets) >= 1 {
+		bestTarget = foodTargets[0]
+	} else {
+		bestTarget = playerTargets[0]
+	}
 	for _, target := range foodTargets {
 		if distance(b.player.Position, target) < distance(b.player.Position, bestTarget) {
 			bestTarget = target
