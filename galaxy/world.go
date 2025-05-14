@@ -321,7 +321,9 @@ func (w *World) sendState(receiver *Player) {
 /// OPERATIONS
 
 func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Operation) {
-	log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
+	if (*operation.OperationType != pb.OperationType_OpMove) {
+		log.Printf("handling new operation, player = %v, op = %v", connectionID, operation)
+	}
 	w.playersMutex.RLock()
 	player, exists := w.playersConnection[connectionID]
 	w.playersMutex.RUnlock()
