@@ -126,6 +126,7 @@ func (w *World) checkForBots() {
 				break
 			}
 		}
+		w.playersMutex.RUnlock()
 
 		if onlyBots {
 			return
@@ -139,8 +140,7 @@ func (w *World) checkForBots() {
 			go bot.Start(w)
 		}
 
-		w.playersMutex.RUnlock()
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -263,7 +263,6 @@ func (w *World) sendJoin(player *Player) {
 
 func (w *World) sendState(receiver *Player) {
 	w.playersMutex.RLock()
-	defer w.playersMutex.RUnlock()
 
 	for _, player := range w.players {
 		if player.PlayerID == receiver.PlayerID {
@@ -296,6 +295,7 @@ func (w *World) sendState(receiver *Player) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+	w.playersMutex.RUnlock()
 	time.Sleep(200 * time.Millisecond)
 
 	var pbFoods []*pb.Food
