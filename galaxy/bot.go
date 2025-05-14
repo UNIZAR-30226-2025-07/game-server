@@ -103,7 +103,7 @@ func (b *Bot) checkColision(w *World) {
 
 	w.playersMutex.RLock()
 	for _, player := range w.players {
-		if player.PlayerID == b.player.PlayerID || player.Radius <= b.player.Radius + 5 {
+		if player.PlayerID == b.player.PlayerID || player.Radius + 5 > b.player.Radius {
 			continue
 		}
 		if distance(b.player.Position, player.Position) < surface {
