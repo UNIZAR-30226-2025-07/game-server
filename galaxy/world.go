@@ -295,7 +295,6 @@ func (w *World) sendState(receiver *Player) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	w.playersMutex.RUnlock()
 	time.Sleep(200 * time.Millisecond)
 
 	var pbFoods []*pb.Food
@@ -316,6 +315,8 @@ func (w *World) sendState(receiver *Player) {
 	}
 
 	w.sendEvent(receiver, event)
+	time.Sleep(200 * time.Millisecond)
+	w.playersMutex.RUnlock()
 }
 
 /// OPERATIONS
