@@ -114,7 +114,7 @@ func (p *Player) GetPosition() *Vector2D {
 }
 
 func (p *Player) UpdateRadius(radius uint32) {
-	log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius)
+	// log.Printf("updating player radius, player = %v, old = %v, new = %v", p.PlayerID, p.Radius, radius)
 	p.Lock()
 	p.Radius = radius
 
