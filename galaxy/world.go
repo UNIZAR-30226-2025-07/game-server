@@ -118,7 +118,7 @@ func NewWorld(factory ConnectionFactory) *World {
 
 func (w *World) checkForBots() {
 	for {
-		w.playersMutex.RLock();
+		w.playersMutex.RLock()
 		onlyBots := true
 		for _, player := range w.players {
 			if player.conn != nil {
@@ -139,17 +139,16 @@ func (w *World) checkForBots() {
 			go bot.Start(w)
 		}
 
-		w.playersMutex.RUnlock();
+		w.playersMutex.RUnlock()
 		time.Sleep(5 * time.Second)
 	}
 }
 
-func (w *World) sendEvent(player *Player, event *pb.Event) {
+func (w *World) sendEvent(player *Player, event *pb.Event) error {
 	err := player.SendEvent(event)
-	if err != nil {
-		log.Printf("deleting player %v", player.PlayerID.String())
-		w.removePlayer(player)
-	}
+	return err
+	// if err != nil {
+	// }
 }
 
 func (w *World) HandleNewConnection(writer http.ResponseWriter, r *http.Request) {
@@ -175,7 +174,13 @@ func (w *World) broadcastEvent(event *pb.Event) {
 	defer w.playersMutex.RUnlock()
 
 	for _, player := range w.players {
-		w.sendEvent(player, event)
+		err := w.sendEvent(player, event)
+		if err != nil {
+			w.playersMutex.RUnlock()
+			log.Printf("deleting player %v becau", player.PlayerID.String())
+			w.removePlayer(player)
+			w.playersMutex.RLock()
+		}
 	}
 }
 
@@ -234,9 +239,6 @@ func (w *World) broadcastNewPlayer(player *Player) {
 }
 
 func (w *World) sendJoin(player *Player) {
-	w.playersMutex.RLock()
-	defer w.playersMutex.RUnlock()
-
 	event := &pb.Event{
 		EventType: pb.EventType_EvJoin.Enum(),
 		EventData: &pb.Event_JoinEvent{
@@ -251,7 +253,12 @@ func (w *World) sendJoin(player *Player) {
 	}
 
 	log.Printf("sending join")
-	w.sendEvent(player, event)
+
+	err := w.sendEvent(player, event)
+	if err != nil {
+		log.Printf("deleting player %v becau", player.PlayerID.String())
+		w.removePlayer(player)
+	}
 }
 
 func (w *World) sendState(receiver *Player) {
@@ -279,7 +286,14 @@ func (w *World) sendState(receiver *Player) {
 
 		log.Printf("sending state %v to player %v", player.ConnectionID, receiver.ConnectionID)
 
-		w.sendEvent(receiver, event)
+		err := w.sendEvent(receiver, event)
+		if err != nil {
+			log.Printf("deleting player %v becau", player.PlayerID.String())
+			w.playersMutex.RUnlock()
+			w.removePlayer(receiver)
+			w.playersMutex.RLock()
+			return
+		}
 		time.Sleep(100 * time.Millisecond)
 	}
 	time.Sleep(200 * time.Millisecond)
@@ -423,7 +437,6 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 	w.sendJoin(player)
 	w.sendState(player)
 	w.broadcastNewPlayer(player)
-
 
 	player.Stats.Lock()
 	player.Stats.TimeStart = time.Now()
