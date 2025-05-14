@@ -386,7 +386,10 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 	w.playersMutex.Lock()
 	if len(w.players) == 0 {
 		// first player
-		go w.checkForBots()
+		if w.gameID == nil {
+			// only in public matches
+			go w.checkForBots()
+		}
 	}
 	w.players[player.PlayerID] = player
 	w.playersMutex.Unlock()
