@@ -185,8 +185,9 @@ func (w *World) removePlayer(player *Player) {
 	}
 
 	w.broadcastEvent(event)
-	time.Sleep(200*time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 	player.Disconnect()
+	player.Stats.TimeEnd = time.Now()
 	w.database.PostAchievements(player)
 }
 
@@ -314,6 +315,7 @@ func (w *World) handlePlayerOperation(connectionID uuid.UUID, operation *pb.Oper
 func (w *World) pauseServer() {
 	if w.gameID == nil {
 		// pause is not implemented in public matches
+		log.Printf("pausing in a public server")
 		return
 	}
 
@@ -322,18 +324,22 @@ func (w *World) pauseServer() {
 		EventData: &pb.Event_PauseEvent{},
 	}
 
+	log.Printf("broadcasting pause")
 	w.broadcastEvent(pauseEvent)
-	w.database.PausePrivateGame(*w.gameID)
-	w.database.UpdateValues()
-
 	w.playersMutex.Lock()
+	log.Printf("sending paused game")
+	w.database.PausePrivateGame(*w.gameID)
+	log.Printf("sending updatevalues")
+	w.database.UpdateValues(w)
+
 	for id, player := range w.players {
 		player.Disconnect()
 		delete(w.players, id)
 	}
 	w.playersMutex.Unlock()
 
-	os.Exit(0)
+	log.Printf("restarting private server")
+	w.gameID = nil;
 }
 
 func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
@@ -361,11 +367,12 @@ func (w *World) operationJoin(player *Player, joinOperation *pb.JoinOperation) {
 
 		if w.gameID == nil {
 			w.gameID = joinOperation.GameID
+			log.Printf("set up gameID: %v", *w.gameID)
 			w.database.StartPrivateGame(*w.gameID)
 			w.savedPlayers = w.database.GetValues(*w.gameID)
 		} else {
-			if w.gameID != joinOperation.GameID {
-				log.Printf("ERROR: a player tried joining a private server with the wrong gameID, kicking him.")
+			if *w.gameID != *joinOperation.GameID {
+				log.Printf("ERROR: a player tried joining a private server with the wrong gameID, kicking him. gameID = %v", *joinOperation.GameID)
 				return
 			}
 		}
@@ -423,6 +430,24 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 	for i, f := range w.food {
 		if f.position == *foodPos {
 			w.food = append(w.food[:i], w.food[i+1:]...)
+			// add new food
+			newFood := Food{
+				position: *randomPosition(),
+				color:    randomColor(),
+			}
+			w.food = append(w.food, newFood)
+
+			newFoodEvent := &pb.Event{
+				EventType: pb.EventType_EvNewFood.Enum(),
+				EventData: &pb.Event_NewFoodEvent{
+					NewFoodEvent: &pb.NewFoodEvent{
+						Food: []*pb.Food{{
+								Position: newFood.position.toPacket(),
+								Color:    &newFood.color}}}},
+			}
+
+			w.broadcastEvent(newFoodEvent)
+			break
 		}
 	}
 	w.foodMutex.Unlock()
@@ -453,6 +478,21 @@ func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOper
 
 func (w *World) operationEatPlayer(player *Player, operation *pb.EatPlayerOperation) {
 	log.Printf("operationEatPlayer, player = %v, operation = %v", player.PlayerID.String(), operation.String())
+
+	playerToEatID, _ := uuid.FromBytes(operation.PlayerEaten)
+	w.playersMutex.RLock()
+	playerToEat, exists := w.players[playerToEatID]
+	w.playersMutex.RUnlock()
+	if !exists {
+		log.Printf("...trying to eat a dead player")
+		return
+	}
+
+	if (player.Radius <= playerToEat.Radius) {
+		log.Printf("player %v tried to eat player %v while being equal or smaller size", player.ConnectionID, playerToEat.ConnectionID);
+		return
+	}
+
 	player.UpdateRadius(*operation.NewRadius)
 
 	playerIDBytes, _ := player.PlayerID.MarshalBinary()
