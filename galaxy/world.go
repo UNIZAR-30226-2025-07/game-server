@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"galaxy.io/server/proto"
 	pb "galaxy.io/server/proto"
 	"github.com/google/uuid"
 )
@@ -176,10 +175,6 @@ func (w *World) broadcastEvent(event *pb.Event) {
 	defer w.playersMutex.RUnlock()
 
 	for _, player := range w.players {
-		if *event.EventType != proto.EventType_EvPlayerMove {
-			log.Printf("sending event: %v to %v", event.EventType.String(), player.ConnectionID.String())
-		}
-
 		w.sendEvent(player, event)
 	}
 }
@@ -355,9 +350,7 @@ func (w *World) pauseServer() {
 	log.Printf("broadcasting pause")
 	w.broadcastEvent(pauseEvent)
 	w.playersMutex.Lock()
-	log.Printf("sending paused game")
 	w.database.PausePrivateGame(*w.gameID)
-	log.Printf("sending updatevalues")
 	w.database.UpdateValues(w)
 
 	for id, player := range w.players {
@@ -461,7 +454,6 @@ func (w *World) operationPlayerMove(player *Player, moveOperation *pb.MoveOperat
 }
 
 func (w *World) operationPlayerEatFood(player *Player, operation *pb.EatFoodOperation) {
-	log.Printf("operationPlayerEatFood, player = %v, operation = %v", player.PlayerID.String(), operation.String())
 	player.UpdateRadius(*operation.NewRadius)
 
 	foodPos := VectorFromPacket(operation.FoodPosition)
