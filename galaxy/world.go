@@ -118,6 +118,7 @@ func NewWorld(factory ConnectionFactory) *World {
 
 func (w *World) checkForBots() {
 	for {
+		time.Sleep(10 * time.Second)
 		w.playersMutex.RLock()
 		onlyBots := true
 		for _, player := range w.players {
@@ -139,8 +140,6 @@ func (w *World) checkForBots() {
 			w.broadcastNewPlayer(bot.player)
 			go bot.Start(w)
 		}
-
-		time.Sleep(10 * time.Second)
 	}
 }
 
